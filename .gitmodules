@@ -1,0 +1,12 @@
+[submodule "third-party/imgui"]
+	path = third-party/imgui
+	url = git@github.com:ocornut/imgui.git
+	branch = master
+[submodule "third-party/glfw"]
+	path = third-party/glfw
+	url = git@github.com:glfw/glfw.git
+	branch = master
+[submodule "third-party/glad"]
+	path = third-party/glad
+	url = git@github.com:Dav1dde/glad.git
+	branch = 5bf3eda6da606324999775b88a90ed572202be93
