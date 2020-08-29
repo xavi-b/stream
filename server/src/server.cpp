@@ -1,6 +1,6 @@
 #include "server.h"
 
-namespace ST
+namespace ST::Network
 {
 
 using boost::asio::ip::udp;
@@ -105,4 +105,4 @@ void Server::removeConnection(shared_connection connection)
     }
 }
 
-} // namespace ST
+} // namespace ST::Network

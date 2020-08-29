@@ -8,7 +8,7 @@
 #include <boost/shared_ptr.hpp>
 #include <unordered_set>
 
-namespace ST
+namespace ST::Network
 {
 
 class Server
@@ -36,6 +36,6 @@ private:
     std::unordered_set<shared_connection> connections_;
 };
 
-} // namespace ST
+} // namespace ST::Network
 
 #endif

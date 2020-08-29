@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-namespace ST
+namespace ST::Network
 {
 
 using boost::asio::ip::udp;
@@ -56,4 +56,4 @@ void Client::handle_send(const boost::system::error_code& error, size_t /*number
     }
 }
 
-} // namespace ST
+} // namespace ST::Network

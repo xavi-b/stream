@@ -8,7 +8,7 @@
 #include <boost/shared_ptr.hpp>
 #include <memory>
 
-namespace ST
+namespace ST::Network
 {
 
 class Client : public std::enable_shared_from_this<Client>
@@ -35,6 +35,6 @@ private:
     boost::array<char, 128>        network_buffer_;
 };
 
-} // namespace ST
+} // namespace ST::Network
 
 #endif
