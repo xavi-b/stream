@@ -6,6 +6,7 @@ project(${PROJECT_NAME})
 
 # C++
 set(CMAKE_CXX_STANDARD              17)
+set(CMAKE_CXX_STANDARD_REQUIRED     ON)
 set(CMAKE_CXX_COMPILER              "/usr/bin/clang++")
 set(CMAKE_CXX_FLAGS                 "-Wall -Wextra -Wpedantic -std=c++11")
 
