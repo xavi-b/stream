@@ -1,0 +1,9 @@
+Language: Cpp
+BasedOnStyle: microsoft
+NamespaceIndentation: None
+BinPackArguments: false
+BinPackParameters: false
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AccessModifierOffset: -4
+PointerBindsToType: true

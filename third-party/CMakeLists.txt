@@ -1,3 +1,10 @@
+set(MODULE_NAME third-party)
+
+message("Compiling \"${MODULE_NAME}\"")
+
+# dependencies
+find_package(OpenGL REQUIRED)
+
 # GLFW
 set(GLFW_LIB_NAME "glfw")
 set(GLFW_INC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${GLFW_LIB_NAME}/include")
