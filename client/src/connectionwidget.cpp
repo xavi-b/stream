@@ -1,9 +1,13 @@
 #include "connectionwidget.h"
 
+#include "imgui.h"
+
+#include <iostream>
+
 namespace ST::UI
 {
 
-void ConnectionWidget::render() const
+void ConnectionWidget::render()
 {
     float height = 100;
     float width  = 200;
@@ -16,7 +20,6 @@ void ConnectionWidget::render() const
     ImGui::Begin("Connection", NULL, window_flags);
 
     // TODO
-    static char ip[17] = "127.0.0.1";
     struct TextFilters
     {
         static int FilterIp(ImGuiInputTextCallbackData* data)
@@ -26,17 +29,36 @@ void ConnectionWidget::render() const
             return 1;
         }
     };
-    ImGui::InputText("IP", ip, 17, ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterIp);
+    ImGui::InputText("IP", ip_, strlen(ip_), ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterIp);
 
-    static char port[6] = "50000";
-    ImGui::InputText("Port", port, 6, ImGuiInputTextFlags_CharsDecimal);
+    ImGui::InputText("Port", port_, strlen(port_), ImGuiInputTextFlags_CharsDecimal);
 
-    if (ImGui::Button("Connect", ImGui::GetContentRegionAvail()))
-    {
-        // TODO
-    }
+    connectClicked_ = ImGui::Button("Connect", ImGui::GetContentRegionAvail());
 
     ImGui::End();
+}
+
+bool ConnectionWidget::connectClicked() const
+{
+    return connectClicked_;
+}
+
+std::string ConnectionWidget::host() const
+{
+    return std::string(ip_);
+}
+
+unsigned short ConnectionWidget::port() const
+{
+    try
+    {
+        return std::stoi(port_);
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return 0;
+    }
 }
 
 } // namespace ST::UI

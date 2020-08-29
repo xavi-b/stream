@@ -26,7 +26,6 @@ void Client::send()
 Client::Client(boost::asio::io_service& io_service, boost::asio::ip::udp::endpoint server_endpoint)
     : socket_(io_service, udp::udp::v4()), server_endpoint_(server_endpoint)
 {
-    // TODO udp::endpoint receiver_endpoint (boost::asio::ip::address::from_string("127.0.0.1"), 50000);
     receive();
 }
 

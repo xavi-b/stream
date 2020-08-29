@@ -5,4 +5,6 @@ target_sources(${MODULE_NAME}
         "${CMAKE_CURRENT_SOURCE_DIR}/widget.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/connectionwidget.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/streamselectionwidget.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/window.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/streamwindow.cpp"
 )

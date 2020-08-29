@@ -9,7 +9,7 @@ namespace ST::UI
 class StreamSelectionWidget : public Widget
 {
 public:
-    virtual void render() const override;
+    virtual void render() override;
 };
 
 } // namespace ST::UI

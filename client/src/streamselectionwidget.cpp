@@ -1,9 +1,11 @@
 #include "streamselectionwidget.h"
 
+#include "imgui.h"
+
 namespace ST::UI
 {
 
-void StreamSelectionWidget::render() const
+void StreamSelectionWidget::render()
 {
     float height = 200;
     ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y - height), 0);
