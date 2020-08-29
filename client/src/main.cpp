@@ -6,6 +6,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "connectionwidget.h"
+#include "streamselectionwidget.h"
+
 static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
@@ -59,10 +62,8 @@ int main(int, char**)
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    (void)io;
-    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    // ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    // ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -77,6 +78,10 @@ int main(int, char**)
     ConnectionState connectionState  = ConnectionState::NotConnected;
     ImVec4          clear_color      = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+    // Widgets
+    ST::UI::ConnectionWidget connectionWidget;
+    ST::UI::StreamSelectionWidget streamSelectionWidget;
+
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -89,66 +94,10 @@ int main(int, char**)
         ImGui::ShowDemoWindow(&show_demo_window);
 
         if (connectionState == ConnectionState::NotConnected)
-        {
-            float height = 80;
-            float width  = 200;
-            ImGui::SetNextWindowPos(ImVec2((io.DisplaySize.x - width) / 2, (io.DisplaySize.y - height) / 2), 0);
-            ImGui::SetNextWindowSize(ImVec2(width, height), 0);
-            ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
-                                            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
-                                            ImGuiWindowFlags_NoNav;
-
-            ImGui::Begin("Connection", NULL, window_flags);
-
-            // TODO
-
-            ImGui::End();
-        }
+            connectionWidget.render();
 
         if (connectionState == ConnectionState::Connected)
-        {
-            float height = 200;
-            ImGui::SetNextWindowPos(ImVec2(0, io.DisplaySize.y - height), 0);
-            ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, height), 0);
-            ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
-                                            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
-                                            ImGuiWindowFlags_NoNav;
-
-            ImGui::Begin("Streams", NULL, window_flags);
-
-            ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 1.0f));
-            ImVec2 scrolling_child_size = ImGui::GetContentRegionAvail();
-            ImGui::BeginChild("scrolling", scrolling_child_size, true, ImGuiWindowFlags_HorizontalScrollbar);
-            for (int line = 0; line < 6; line++)
-            {
-                // Display random stuff. For the sake of this trivial demo we are using basic Button() + SameLine()
-                // If you want to create your own time line for a real application you may be better off manipulating
-                // the cursor position yourself, aka using SetCursorPos/SetCursorScreenPos to position the widgets
-                // yourself. You may also want to use the lower-level ImDrawList API.
-                int num_buttons = 10 + ((line & 1) ? line * 9 : line * 3);
-                for (int n = 0; n < num_buttons; n++)
-                {
-                    if (n > 0)
-                        ImGui::SameLine();
-                    ImGui::PushID(n + line * 1000);
-                    char num_buf[16];
-                    sprintf(num_buf, "%d", n);
-                    const char* label = (!(n % 15)) ? "FizzBuzz" : (!(n % 3)) ? "Fizz" : (!(n % 5)) ? "Buzz" : num_buf;
-                    float       hue   = n * 0.05f;
-                    ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(hue, 0.6f, 0.6f));
-                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(hue, 0.7f, 0.7f));
-                    ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(hue, 0.8f, 0.8f));
-                    ImGui::Button(label, ImVec2(40.0f, 0.0f));
-                    ImGui::PopStyleColor(3);
-                    ImGui::PopID();
-                }
-            }
-            ImGui::EndChild();
-            ImGui::PopStyleVar(2);
-
-            ImGui::End();
-        }
+            streamSelectionWidget.render();
 
         // Rendering
         ImGui::Render();
