@@ -29,18 +29,17 @@ void ConnectionWidget::render()
             return 1;
         }
     };
-    ImGui::InputText("IP", ip_, strlen(ip_), ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterIp);
+    ImGui::InputText("IP", ip_, sizeof(ip_), ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterIp);
 
-    ImGui::InputText("Port", port_, strlen(port_), ImGuiInputTextFlags_CharsDecimal);
+    ImGui::InputText("Port", port_, sizeof(port_), ImGuiInputTextFlags_CharsDecimal);
 
-    connectClicked_ = ImGui::Button("Connect", ImGui::GetContentRegionAvail());
+    if (ImGui::Button("Connect", ImGui::GetContentRegionAvail()))
+    {
+        if (onConnectClicked_)
+            onConnectClicked_();
+    }
 
     ImGui::End();
-}
-
-bool ConnectionWidget::connectClicked() const
-{
-    return connectClicked_;
 }
 
 std::string ConnectionWidget::host() const
@@ -59,6 +58,11 @@ unsigned short ConnectionWidget::port() const
         std::cerr << e.what() << '\n';
         return 0;
     }
+}
+
+void ConnectionWidget::setOnConnectClicked(std::function<void()> f)
+{
+    onConnectClicked_ = f;
 }
 
 } // namespace ST::UI

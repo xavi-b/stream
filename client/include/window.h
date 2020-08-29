@@ -14,6 +14,7 @@ public:
     int          exec();
     virtual void render() = 0;
     virtual void renderBackground();
+    virtual void onClose() = 0;
 
 protected:
     GLFWwindow* window_;

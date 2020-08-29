@@ -100,6 +100,8 @@ int Window::exec()
         glfwSwapBuffers(window_);
     }
 
+    onClose();
+
     return 0;
 }
 

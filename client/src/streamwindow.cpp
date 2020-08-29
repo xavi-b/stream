@@ -16,7 +16,21 @@ namespace ST::UI
 
 StreamWindow::StreamWindow() : Window()
 {
+    connectionWidget_.setOnConnectClicked([this]() {
+        std::string    host = connectionWidget_.host();
+        unsigned short port = connectionWidget_.port();
 
+        boost::asio::ip::udp::endpoint receiver_endpoint(boost::asio::ip::address::from_string(host), port);
+
+        connection_future_ = std::async(std::launch::async, [this, receiver_endpoint]() {
+            std::cout << "client started\n";
+            client_ = ST::Network::Client::create(io_service_, receiver_endpoint);
+            client_->receive();
+            client_->getStreams();
+            io_service_.run();
+            std::cout << "client closed\n";
+        });
+    });
 }
 
 StreamWindow::~StreamWindow()
@@ -25,25 +39,17 @@ StreamWindow::~StreamWindow()
 
 void StreamWindow::render()
 {
-    if (connectionWidget_.connectClicked())
-    {
-        std::string    host = connectionWidget_.host();
-        unsigned short port = connectionWidget_.port();
-
-        boost::asio::ip::udp::endpoint receiver_endpoint(boost::asio::ip::address::from_string(host), port);
-
-        connection_future_ = std::async(std::launch::async, [this, &receiver_endpoint]() {
-            client_ = ST::Network::Client::create(io_service_, receiver_endpoint);
-            io_service_.run();
-        });
-    }
-
     using namespace std::chrono_literals;
 
     if (!connection_future_.valid() || connection_future_.wait_for(0ms) == std::future_status::ready)
         connectionState_ = ConnectionState::NotConnected;
     else
-        connectionState_ = ConnectionState::Connected;
+    {
+        if (!client_ || !client_->isConnected())
+            connectionState_ = ConnectionState::Connecting;
+        else
+            connectionState_ = ConnectionState::Connected;
+    }
 
     bool show_demo_window = true;
     ImGui::ShowDemoWindow(&show_demo_window);
@@ -60,6 +66,12 @@ void StreamWindow::render()
 void StreamWindow::renderBackground()
 {
     Window::renderBackground();
+}
+
+void StreamWindow::onClose()
+{
+    io_service_.stop();
+    connection_future_.wait();
 }
 
 } // namespace ST::UI

@@ -1,5 +1,7 @@
 #include "server.h"
 
+#include <iostream>
+
 namespace ST::Network
 {
 
@@ -28,8 +30,11 @@ void Server::handle_receive(shared_connection                connection,
                             boost::system::error_code const& error,
                             std::size_t /*bytes_transferred*/)
 {
+    std::cout << "handle_receive\n";
     if (!error || error == boost::asio::error::message_size)
     {
+        std::cout << "Received from: " << connection->endpoint().address().to_string() << "\n";
+
         addConnection(connection);
 
         // TODO if getStreams

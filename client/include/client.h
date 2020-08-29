@@ -23,16 +23,25 @@ public:
 
     void receive();
     void send();
+    void getStreams();
+
+    bool isConnected() const;
+
+    void close();
 
 private:
     Client(boost::asio::io_service& io_service, boost::asio::ip::udp::endpoint server_endpoint);
 
-    void handle_receive(const boost::system::error_code& error, size_t number_bytes_read);
-    void handle_send(const boost::system::error_code& error, size_t number_bytes_read);
+    void handle_receive(const boost::system::error_code& error, size_t bytes_transferred);
+    void handle_send(const boost::system::error_code& error, size_t bytes_transferred);
+    void handle_timeout();
 
     boost::asio::ip::udp::socket   socket_;
     boost::asio::ip::udp::endpoint server_endpoint_;
+    boost::asio::deadline_timer    deadline_timer_;
     boost::array<char, 128>        network_buffer_;
+
+    std::atomic<bool> connected_;
 };
 
 } // namespace ST::Network

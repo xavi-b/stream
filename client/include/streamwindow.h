@@ -25,6 +25,7 @@ public:
     virtual ~StreamWindow();
     virtual void render() override;
     virtual void renderBackground() override;
+    virtual void onClose() override;
 
 private:
     ConnectionState                      connectionState_ = ConnectionState::NotConnected;
