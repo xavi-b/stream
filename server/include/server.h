@@ -20,6 +20,9 @@ public:
 
 private:
     void receive();
+    void keepAlive();
+
+    void handle_keepAlive();
 
     void handle_receive(shared_connection                connection,
                         boost::system::error_code const& error,
@@ -33,6 +36,7 @@ private:
     void removeConnection(shared_connection connection);
 
     boost::asio::ip::udp::socket          socket_;
+    boost::asio::deadline_timer           alive_timer_;
     std::unordered_set<shared_connection> connections_;
 };
 

@@ -16,6 +16,7 @@ class Client : public std::enable_shared_from_this<Client>
     using shared_client = std::shared_ptr<Client>;
 
 public:
+    ~Client();
     static shared_client create(boost::asio::io_service& ios, boost::asio::ip::udp::endpoint server_endpoint)
     {
         return std::shared_ptr<Client>(new Client(ios, server_endpoint));
@@ -34,7 +35,7 @@ private:
 
     void handle_receive(const boost::system::error_code& error, size_t bytes_transferred);
     void handle_send(const boost::system::error_code& error, size_t bytes_transferred);
-    void handle_timeout();
+    void handle_timeout(const boost::system::error_code& error);
 
     boost::asio::ip::udp::socket   socket_;
     boost::asio::ip::udp::endpoint server_endpoint_;

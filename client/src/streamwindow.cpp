@@ -27,6 +27,7 @@ StreamWindow::StreamWindow() : Window()
             client_ = ST::Network::Client::create(io_service_, receiver_endpoint);
             client_->receive();
             client_->getStreams();
+            io_service_.restart();
             io_service_.run();
             std::cout << "client closed\n";
         });
