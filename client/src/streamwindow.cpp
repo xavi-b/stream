@@ -58,7 +58,8 @@ void StreamWindow::render()
     if (connectionState_ == ConnectionState::NotConnected)
         connectionWidget_.render();
 
-    // TODO if (connectionState_ == ConnectionState::Connecting)
+    if (connectionState_ == ConnectionState::Connecting)
+        connectingWidget_.render();
 
     if (connectionState_ == ConnectionState::Connected)
         streamSelectionWidget_.render();

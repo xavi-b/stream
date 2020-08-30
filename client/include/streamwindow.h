@@ -3,6 +3,7 @@
 
 #include "window.h"
 #include "connectionwidget.h"
+#include "connectingwidget.h"
 #include "streamselectionwidget.h"
 #include "client.h"
 
@@ -34,6 +35,7 @@ private:
     std::shared_ptr<ST::Network::Client> client_;
 
     ST::UI::ConnectionWidget      connectionWidget_;
+    ST::UI::ConnectingWidget      connectingWidget_;
     ST::UI::StreamSelectionWidget streamSelectionWidget_;
 };
 
