@@ -30,8 +30,8 @@ public:
 
 private:
     ConnectionState                      connectionState_ = ConnectionState::NotConnected;
-    std::future<void>                    connection_future_;
-    boost::asio::io_service              io_service_;
+    std::future<void>                    connectionFuture_;
+    boost::asio::io_service              ioService_;
     std::shared_ptr<ST::Network::Client> client_;
 
     ST::UI::ConnectionWidget      connectionWidget_;

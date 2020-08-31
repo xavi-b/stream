@@ -5,9 +5,9 @@ int main(int, char **)
 {
     try
     {
-        boost::asio::io_service io_service;
-        ST::Network::Server server(io_service, 50000);
-        io_service.run();
+        boost::asio::io_service ioService;
+        ST::Network::Server server(ioService, 50000);
+        ioService.run();
     }
     catch (std::exception &e)
     {

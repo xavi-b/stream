@@ -17,9 +17,9 @@ class Client : public std::enable_shared_from_this<Client>
 
 public:
     ~Client();
-    static shared_client create(boost::asio::io_service& ios, boost::asio::ip::udp::endpoint server_endpoint)
+    static shared_client create(boost::asio::io_service& ioService, boost::asio::ip::udp::endpoint serverEndpoint)
     {
-        return std::shared_ptr<Client>(new Client(ios, server_endpoint));
+        return std::shared_ptr<Client>(new Client(ioService, serverEndpoint));
     }
 
     void receive();
@@ -31,16 +31,16 @@ public:
     void close();
 
 private:
-    Client(boost::asio::io_service& io_service, boost::asio::ip::udp::endpoint server_endpoint);
+    Client(boost::asio::io_service& ioService, boost::asio::ip::udp::endpoint serverEndpoint);
 
-    void handle_receive(const boost::system::error_code& error, size_t bytes_transferred);
-    void handle_send(const boost::system::error_code& error, size_t bytes_transferred);
-    void handle_timeout(const boost::system::error_code& error);
+    void handleReceive(const boost::system::error_code& error, size_t bytesTransferred);
+    void handleSend(const boost::system::error_code& error, size_t bytesTransferred);
+    void handleTimeout(const boost::system::error_code& error);
 
     boost::asio::ip::udp::socket   socket_;
-    boost::asio::ip::udp::endpoint server_endpoint_;
-    boost::asio::deadline_timer    deadline_timer_;
-    boost::array<char, 128>        network_buffer_;
+    boost::asio::ip::udp::endpoint serverEndpoint_;
+    boost::asio::deadline_timer    deadlineTimer_;
+    boost::array<char, 128>        networkBuffer_;
 
     std::atomic<bool> connected_;
 };

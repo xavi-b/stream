@@ -14,14 +14,14 @@ Client::~Client()
 
 void Client::receive()
 {
-    socket_.async_receive(boost::asio::buffer(network_buffer_),
-                          boost::bind(&Client::handle_receive,
+    socket_.async_receive(boost::asio::buffer(networkBuffer_),
+                          boost::bind(&Client::handleReceive,
                                       shared_from_this(),
                                       boost::asio::placeholders::error,
                                       boost::asio::placeholders::bytes_transferred));
-    deadline_timer_.expires_from_now(boost::posix_time::seconds(30));
-    deadline_timer_.async_wait(
-        boost::bind(&Client::handle_timeout, shared_from_this(), boost::asio::placeholders::error));
+    deadlineTimer_.expires_from_now(boost::posix_time::seconds(30));
+    deadlineTimer_.async_wait(
+        boost::bind(&Client::handleTimeout, shared_from_this(), boost::asio::placeholders::error));
 }
 
 void Client::send()
@@ -30,10 +30,10 @@ void Client::send()
     // TODO selectStream
     // TODO sendStream
 
-    boost::array<char, 1> send_buf = {0};
-    socket_.async_send_to(boost::asio::buffer(send_buf),
-                          server_endpoint_,
-                          boost::bind(&Client::handle_send,
+    boost::array<char, 1> sendBuffer = {0};
+    socket_.async_send_to(boost::asio::buffer(sendBuffer),
+                          serverEndpoint_,
+                          boost::bind(&Client::handleSend,
                                       shared_from_this(),
                                       boost::asio::placeholders::error,
                                       boost::asio::placeholders::bytes_transferred));
@@ -43,10 +43,10 @@ void Client::getStreams()
 {
     // TODO getStreams
 
-    boost::array<char, 1> send_buf = {0};
-    socket_.async_send_to(boost::asio::buffer(send_buf),
-                          server_endpoint_,
-                          boost::bind(&Client::handle_send,
+    boost::array<char, 1> sendBuffer = {0};
+    socket_.async_send_to(boost::asio::buffer(sendBuffer),
+                          serverEndpoint_,
+                          boost::bind(&Client::handleSend,
                                       shared_from_this(),
                                       boost::asio::placeholders::error,
                                       boost::asio::placeholders::bytes_transferred));
@@ -62,19 +62,18 @@ void Client::close()
     socket_.close();
 }
 
-Client::Client(boost::asio::io_service& io_service, boost::asio::ip::udp::endpoint server_endpoint)
-    : socket_(io_service, udp::udp::v4()), server_endpoint_(server_endpoint), deadline_timer_(io_service),
-      connected_(false)
+Client::Client(boost::asio::io_service& ioService, boost::asio::ip::udp::endpoint serverEndpoint)
+    : socket_(ioService, udp::udp::v4()), serverEndpoint_(serverEndpoint), deadlineTimer_(ioService), connected_(false)
 {
 }
 
-void Client::handle_receive(const boost::system::error_code& error, size_t bytes_transferred)
+void Client::handleReceive(const boost::system::error_code& error, size_t bytesTransferred)
 {
-    std::cout << "handle_receive\n";
+    std::cout << "handleReceive\n";
     if (!error)
     {
-        std::cout << "Received from " << server_endpoint_.address().to_string() << ": "
-                  << std::string(network_buffer_.data(), bytes_transferred) << "\n";
+        std::cout << "Received from " << serverEndpoint_.address().to_string() << ": "
+                  << std::string(networkBuffer_.data(), bytesTransferred) << "\n";
         connected_.store(true);
 
         // TODO if stream list
@@ -87,9 +86,9 @@ void Client::handle_receive(const boost::system::error_code& error, size_t bytes
     }
 }
 
-void Client::handle_send(const boost::system::error_code& error, size_t /*bytes_transferred*/)
+void Client::handleSend(const boost::system::error_code& error, size_t /*bytesTransferred*/)
 {
-    std::cout << "handle_send\n";
+    std::cout << "handleSend\n";
     if (!error)
     {
         // TODO ?
@@ -100,9 +99,9 @@ void Client::handle_send(const boost::system::error_code& error, size_t /*bytes_
     }
 }
 
-void Client::handle_timeout(const boost::system::error_code& error)
+void Client::handleTimeout(const boost::system::error_code& error)
 {
-    std::cout << "handle_timeout\n";
+    std::cout << "handleTimeout\n";
     if (!error)
     {
         close();

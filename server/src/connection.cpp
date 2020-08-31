@@ -11,12 +11,12 @@ Connection::Connection()
 
 boost::asio::ip::udp::endpoint& Connection::endpoint()
 {
-    return remote_endpoint_;
+    return remoteEndpoint_;
 }
 
 Connection::receiving_buffer& Connection::buffer()
 {
-    return receiving_buffer_;
+    return receivingBuffer_;
 }
 
 } // namespace ST

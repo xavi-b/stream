@@ -21,8 +21,8 @@ public:
     receiving_buffer&               buffer();
 
 private:
-    boost::asio::ip::udp::endpoint remote_endpoint_;
-    receiving_buffer               receiving_buffer_;
+    boost::asio::ip::udp::endpoint remoteEndpoint_;
+    receiving_buffer               receivingBuffer_;
 };
 
 } // namespace ST

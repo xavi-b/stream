@@ -16,27 +16,25 @@ class Server
     using shared_connection = std::shared_ptr<Connection>;
 
 public:
-    Server(boost::asio::io_service& io_service, unsigned short port_num);
+    Server(boost::asio::io_service& ioService, unsigned short portNum);
 
 private:
     void receive();
     void keepAlive();
 
-    void handle_keepAlive();
+    void handleKeepAlive();
 
-    void handle_receive(shared_connection                connection,
-                        boost::system::error_code const& error,
-                        std::size_t                      bytes_transferred);
+    void handleReceive(shared_connection                connection,
+                       boost::system::error_code const& error,
+                       std::size_t                      bytesTransferred);
 
-    void handle_send(shared_connection                connection,
-                     boost::system::error_code const& error,
-                     std::size_t                      bytes_transferred);
+    void handleSend(shared_connection connection, boost::system::error_code const& error, std::size_t bytesTransferred);
 
     void addConnection(shared_connection connection);
     void removeConnection(shared_connection connection);
 
     boost::asio::ip::udp::socket          socket_;
-    boost::asio::deadline_timer           alive_timer_;
+    boost::asio::deadline_timer           aliveTimer_;
     std::unordered_set<shared_connection> connections_;
 };
 

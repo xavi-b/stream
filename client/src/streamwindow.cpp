@@ -20,15 +20,15 @@ StreamWindow::StreamWindow() : Window()
         std::string    host = connectionWidget_.host();
         unsigned short port = connectionWidget_.port();
 
-        boost::asio::ip::udp::endpoint receiver_endpoint(boost::asio::ip::address::from_string(host), port);
+        boost::asio::ip::udp::endpoint receiverEndpoint(boost::asio::ip::address::from_string(host), port);
 
-        connection_future_ = std::async(std::launch::async, [this, receiver_endpoint]() {
+        connectionFuture_ = std::async(std::launch::async, [this, receiverEndpoint]() {
             std::cout << "client started\n";
-            client_ = ST::Network::Client::create(io_service_, receiver_endpoint);
+            client_ = ST::Network::Client::create(ioService_, receiverEndpoint);
             client_->receive();
             client_->getStreams();
-            io_service_.restart();
-            io_service_.run();
+            ioService_.restart();
+            ioService_.run();
             std::cout << "client closed\n";
         });
     });
@@ -42,7 +42,7 @@ void StreamWindow::render()
 {
     using namespace std::chrono_literals;
 
-    if (!connection_future_.valid() || connection_future_.wait_for(0ms) == std::future_status::ready)
+    if (!connectionFuture_.valid() || connectionFuture_.wait_for(0ms) == std::future_status::ready)
         connectionState_ = ConnectionState::NotConnected;
     else
     {
@@ -72,8 +72,8 @@ void StreamWindow::renderBackground()
 
 void StreamWindow::onClose()
 {
-    io_service_.stop();
-    connection_future_.wait();
+    ioService_.stop();
+    connectionFuture_.wait();
 }
 
 } // namespace ST::UI

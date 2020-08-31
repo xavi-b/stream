@@ -7,8 +7,8 @@ namespace ST::Network
 
 using boost::asio::ip::udp;
 
-Server::Server(boost::asio::io_service& io_service, unsigned short port_num)
-    : socket_(io_service, udp::endpoint(udp::v4(), port_num)), alive_timer_(io_service)
+Server::Server(boost::asio::io_service& ioService, unsigned short portNum)
+    : socket_(ioService, udp::endpoint(udp::v4(), portNum)), aliveTimer_(ioService)
 {
     receive();
     keepAlive();
@@ -20,7 +20,7 @@ void Server::receive()
 
     socket_.async_receive_from(boost::asio::buffer(connection->buffer()),
                                connection->endpoint(),
-                               boost::bind(&Server::handle_receive,
+                               boost::bind(&Server::handleReceive,
                                            this,
                                            connection,
                                            boost::asio::placeholders::error,
@@ -29,20 +29,20 @@ void Server::receive()
 
 void Server::keepAlive()
 {
-    alive_timer_.expires_from_now(boost::posix_time::seconds(5));
-    alive_timer_.async_wait(boost::bind(&Server::handle_keepAlive, this));
+    aliveTimer_.expires_from_now(boost::posix_time::seconds(5));
+    aliveTimer_.async_wait(boost::bind(&Server::handleKeepAlive, this));
 }
 
-void Server::handle_keepAlive()
+void Server::handleKeepAlive()
 {
-    std::cout << "handle_keepAlive\n";
+    std::cout << "handleKeepAlive\n";
     for (auto const& c : connections_)
     {
         boost::shared_ptr<std::string> message(new std::string("alive"));
 
         socket_.async_send_to(boost::asio::buffer(*message),
                               c->endpoint(),
-                              boost::bind(&Server::handle_send,
+                              boost::bind(&Server::handleSend,
                                           this,
                                           c,
                                           boost::asio::placeholders::error,
@@ -52,15 +52,15 @@ void Server::handle_keepAlive()
     keepAlive();
 }
 
-void Server::handle_receive(shared_connection                connection,
-                            boost::system::error_code const& error,
-                            std::size_t                      bytes_transferred)
+void Server::handleReceive(shared_connection                connection,
+                           boost::system::error_code const& error,
+                           std::size_t                      bytesTransferred)
 {
-    std::cout << "handle_receive\n";
+    std::cout << "handleReceive\n";
     if (!error || error == boost::asio::error::message_size)
     {
         std::cout << "Received from " << connection->endpoint().address().to_string() << ": "
-                  << std::string(connection->buffer().data(), bytes_transferred) << "\n";
+                  << std::string(connection->buffer().data(), bytesTransferred) << "\n";
 
         addConnection(connection);
 
@@ -70,7 +70,7 @@ void Server::handle_receive(shared_connection                connection,
 
             socket_.async_send_to(boost::asio::buffer(*message),
                                   connection->endpoint(),
-                                  boost::bind(&Server::handle_send,
+                                  boost::bind(&Server::handleSend,
                                               this,
                                               connection,
                                               boost::asio::placeholders::error,
@@ -96,7 +96,7 @@ void Server::handle_receive(shared_connection                connection,
 
                     socket_.async_send_to(boost::asio::buffer(*message),
                                           c->endpoint(),
-                                          boost::bind(&Server::handle_send,
+                                          boost::bind(&Server::handleSend,
                                                       this,
                                                       c,
                                                       boost::asio::placeholders::error,
@@ -113,11 +113,11 @@ void Server::handle_receive(shared_connection                connection,
     }
 }
 
-void Server::handle_send(shared_connection                connection,
-                         const boost::system::error_code& error,
-                         std::size_t /*bytes_transferred*/)
+void Server::handleSend(shared_connection                connection,
+                        const boost::system::error_code& error,
+                        std::size_t /*bytesTransferred*/)
 {
-    std::cout << "handle_send\n";
+    std::cout << "handleSend\n";
     if (error)
         removeConnection(connection);
 }
