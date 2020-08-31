@@ -2,11 +2,16 @@
 #include "connectionwidget.h"
 #include "streamselectionwidget.h"
 
-#include <iostream>
 #include <exception>
+#include <spdlog/spdlog.h>
 
 int main(int, char**)
 {
+#ifdef DEBUG
+    spdlog::set_level(spdlog::level::debug);
+    spdlog::debug("DEBUG");
+#endif
+
     try
     {
         ST::UI::StreamWindow mainwindow;
@@ -14,7 +19,7 @@ int main(int, char**)
     }
     catch (std::exception const& e)
     {
-        std::cerr << e.what() << '\n';
+        spdlog::critical(e.what());
         return 1;
     }
 }

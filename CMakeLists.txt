@@ -11,8 +11,12 @@ set(CMAKE_CXX_EXTENSIONS            OFF)
 set(CMAKE_CXX_COMPILER              "/usr/bin/clang++")
 set(CMAKE_CXX_FLAGS                 "-Wall -Wextra -Wpedantic -pthread")
 
-if(CMAKE_BUILD_TYPE MATCHES DEBUG)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message("DEBUG")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3")
+    add_definitions(-DDEBUG)
+else()
+    message("RELEASE")
 endif()
 
 # subdirectories

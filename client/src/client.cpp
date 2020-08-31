@@ -1,6 +1,6 @@
 #include "client.h"
 
-#include <iostream>
+#include <spdlog/spdlog.h>
 
 namespace ST::Network
 {
@@ -9,7 +9,7 @@ using boost::asio::ip::udp;
 
 Client::~Client()
 {
-    std::cout << "delete\n";
+    spdlog::debug("~Client");
 }
 
 void Client::receive()
@@ -69,11 +69,13 @@ Client::Client(boost::asio::io_service& ioService, boost::asio::ip::udp::endpoin
 
 void Client::handleReceive(const boost::system::error_code& error, size_t bytesTransferred)
 {
-    std::cout << "handleReceive\n";
+    spdlog::debug("handleReceive");
+
     if (!error)
     {
-        std::cout << "Received from " << serverEndpoint_.address().to_string() << ": "
-                  << std::string(networkBuffer_.data(), bytesTransferred) << "\n";
+        spdlog::debug("Received from {}: {}",
+                      serverEndpoint_.address().to_string(),
+                      std::string(networkBuffer_.data(), bytesTransferred));
         connected_.store(true);
 
         // TODO if stream list
@@ -82,26 +84,28 @@ void Client::handleReceive(const boost::system::error_code& error, size_t bytesT
     }
     else
     {
-        std::cerr << error.message() << "\n";
+        spdlog::warn(error.message());
     }
 }
 
 void Client::handleSend(const boost::system::error_code& error, size_t /*bytesTransferred*/)
 {
-    std::cout << "handleSend\n";
+    spdlog::debug("handleSend");
+
     if (!error)
     {
         // TODO ?
     }
     else
     {
-        std::cerr << error.message() << "\n";
+        spdlog::warn(error.message());
     }
 }
 
 void Client::handleTimeout(const boost::system::error_code& error)
 {
-    std::cout << "handleTimeout\n";
+    spdlog::debug("handleTimeout");
+
     if (!error)
     {
         close();

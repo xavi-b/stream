@@ -7,8 +7,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <spdlog/spdlog.h>
+
 #include <chrono>
-#include <iostream>
 #include <exception>
 
 namespace ST::UI
@@ -23,13 +24,13 @@ StreamWindow::StreamWindow() : Window()
         boost::asio::ip::udp::endpoint receiverEndpoint(boost::asio::ip::address::from_string(host), port);
 
         connectionFuture_ = std::async(std::launch::async, [this, receiverEndpoint]() {
-            std::cout << "client started\n";
+            spdlog::debug("Client started");
             client_ = ST::Network::Client::create(ioService_, receiverEndpoint);
             client_->receive();
             client_->getStreams();
             ioService_.restart();
             ioService_.run();
-            std::cout << "client closed\n";
+            spdlog::debug("Client closed");
         });
     });
 }

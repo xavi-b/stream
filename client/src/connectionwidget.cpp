@@ -2,8 +2,6 @@
 
 #include "imgui.h"
 
-#include <iostream>
-
 namespace ST::UI
 {
 
@@ -55,7 +53,6 @@ unsigned short ConnectionWidget::port() const
     }
     catch (const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
         return 0;
     }
 }

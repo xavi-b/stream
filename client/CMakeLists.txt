@@ -7,6 +7,7 @@ add_executable(${MODULE_NAME} "")
 # dependencies
 find_package(OpenGL REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
+find_package(spdlog REQUIRED)
 
 target_compile_definitions(${MODULE_NAME}
     PUBLIC
@@ -15,13 +16,14 @@ target_compile_definitions(${MODULE_NAME}
 
 target_include_directories(${MODULE_NAME}
     PUBLIC
-        "${OPENGL_INCLUDE_DIR}"
+        ${OPENGL_INCLUDE_DIR}
 )
 
 target_link_libraries(${MODULE_NAME}
     PUBLIC
         ${Boost_LIBRARIES}
         ${OPENGL_LIBRARIES}
+        spdlog::spdlog
         glfw
         glad
         imgui

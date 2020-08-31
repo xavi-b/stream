@@ -7,7 +7,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <iostream>
+#include <spdlog/spdlog.h>
+
 #include <exception>
 
 namespace ST::UI
@@ -15,7 +16,7 @@ namespace ST::UI
 
 static void glfw_error_callback(int error, const char* description)
 {
-    std::cerr << "Glfw Error " << error << ": " << description << "\n";
+    spdlog::critical("Glfw Error {}: {}", error, description);
 }
 
 Window::Window()

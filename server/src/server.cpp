@@ -1,6 +1,6 @@
 #include "server.h"
 
-#include <iostream>
+#include <spdlog/spdlog.h>
 
 namespace ST::Network
 {
@@ -35,7 +35,8 @@ void Server::keepAlive()
 
 void Server::handleKeepAlive()
 {
-    std::cout << "handleKeepAlive\n";
+    spdlog::debug("handleKeepAlive");
+
     for (auto const& c : connections_)
     {
         boost::shared_ptr<std::string> message(new std::string("alive"));
@@ -56,11 +57,13 @@ void Server::handleReceive(shared_connection                connection,
                            boost::system::error_code const& error,
                            std::size_t                      bytesTransferred)
 {
-    std::cout << "handleReceive\n";
+    spdlog::debug("handleReceive");
+
     if (!error || error == boost::asio::error::message_size)
     {
-        std::cout << "Received from " << connection->endpoint().address().to_string() << ": "
-                  << std::string(connection->buffer().data(), bytesTransferred) << "\n";
+        spdlog::debug("Received from {}: {}",
+                      connection->endpoint().address().to_string(),
+                      std::string(connection->buffer().data(), bytesTransferred));
 
         addConnection(connection);
 
@@ -117,7 +120,8 @@ void Server::handleSend(shared_connection                connection,
                         const boost::system::error_code& error,
                         std::size_t /*bytesTransferred*/)
 {
-    std::cout << "handleSend\n";
+    spdlog::debug("handleSend");
+
     if (error)
         removeConnection(connection);
 }

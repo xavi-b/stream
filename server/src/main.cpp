@@ -1,8 +1,15 @@
-#include <iostream>
 #include "server.h"
+
+#include <exception>
+#include <spdlog/spdlog.h>
 
 int main(int, char **)
 {
+#ifdef DEBUG
+    spdlog::set_level(spdlog::level::debug);
+    spdlog::debug("DEBUG");
+#endif
+
     try
     {
         boost::asio::io_service ioService;
@@ -11,7 +18,7 @@ int main(int, char **)
     }
     catch (std::exception &e)
     {
-        std::cerr << e.what() << std::endl;
+        spdlog::critical(e.what());
     }
 
     return 0;
