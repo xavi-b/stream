@@ -4,19 +4,8 @@ message("Compiling \"${MODULE_NAME}\"")
 
 # dependencies
 find_package(OpenGL REQUIRED)
-
-# GLFW
-set(GLFW_LIB_NAME "glfw")
-set(GLFW_INC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${GLFW_LIB_NAME}/include")
-
-set(GLFW_BUILD_DOCS     OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-#set(GLFW_VULKAN_STATIC  OFF CACHE BOOL "" FORCE)    # OFF by default
-#set(BUILD_SHARED_LIBS   OFF CACHE BOOL "" FORCE)    # OFF by default
-set(GLFW_INSTALL        OFF CACHE BOOL "" FORCE)
-
-add_subdirectory(${GLFW_LIB_NAME})
+find_package(PkgConfig REQUIRED)
+pkg_search_module(GLFW REQUIRED glfw3)
 
 # Glad
 set(GLAD_LIB_NAME "glad")
@@ -69,9 +58,14 @@ target_compile_definitions(${IMGUI_LIB_NAME}
         IMGUI_IMPL_OPENGL_LOADER_GLAD=1
 )
 
+target_link_libraries(${IMGUI_LIB_NAME}
+    PUBLIC
+        ${GLFW_LIBRARIES}
+)
+
 target_include_directories(${IMGUI_LIB_NAME}
     PUBLIC
         "${IMGUI_INC_PATH}"
-        "${GLFW_INC_PATH}"
+        "${GLFW_INCLUDE_DIRS}"
         "${GLAD_INC_PATH}"
 )
