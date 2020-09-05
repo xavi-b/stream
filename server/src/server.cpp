@@ -67,19 +67,19 @@ void Server::handleReceive(shared_connection                connection,
 
         spdlog::debug("Received from {}: {}", connection->endpoint().address().to_string(), stringData);
 
-        addConnection(connection);
-
         if (stringData.rfind("getStreams", 0) == 0)
         {
             std::string uuid = stringData.substr(strlen("getStreams"));
             spdlog::debug("getStreams uuid: {}", uuid);
             connection->uuid() = boost::lexical_cast<boost::uuids::uuid>(uuid);
 
+            addConnection(connection);
+
             boost::shared_ptr<std::string> message = boost::make_shared<std::string>("getStreams");
 
             for (auto const& c : connections_)
             {
-                if (c == connection)
+                if (c->uuid() == connection->uuid())
                     continue;
 
                 (*message) += boost::lexical_cast<std::string>(c->uuid()) + '|';
@@ -105,7 +105,7 @@ void Server::handleReceive(shared_connection                connection,
 
             for (auto const& c : connections_)
             {
-                if (c == connection)
+                if (c->uuid() == connection->uuid())
                     continue;
 
                 // TODO if selected broadcast
@@ -142,18 +142,23 @@ void Server::handleSend(shared_connection                connection,
 
 void Server::addConnection(shared_connection connection)
 {
-    if (connections_.find(connection) == connections_.end())
+    auto it = std::find_if(connections_.begin(), connections_.end(), [&connection](auto const& c) {
+        return c->uuid() == connection->uuid();
+    });
+    if (it == connections_.end())
     {
+        spdlog::debug("addConnection {}", boost::lexical_cast<std::string>(connection->uuid()));
         connections_.insert(connection);
     }
 }
 
 void Server::removeConnection(shared_connection connection)
 {
-    if (connections_.find(connection) == connections_.end())
-    {
-        connections_.insert(connection);
-    }
+    auto it = std::find_if(connections_.begin(), connections_.end(), [&connection](auto const& c) {
+        return c->uuid() == connection->uuid();
+    });
+    if (it != connections_.end())
+        connections_.erase(it);
 }
 
 } // namespace ST::Network
