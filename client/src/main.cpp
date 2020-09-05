@@ -5,7 +5,9 @@
 #include <exception>
 #include <spdlog/spdlog.h>
 
-int main(int, char**)
+#include <iostream>
+
+int main(int argc, char** argv)
 {
 #ifdef DEBUG
     spdlog::set_level(spdlog::level::debug);

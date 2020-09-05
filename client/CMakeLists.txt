@@ -10,6 +10,7 @@ find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)
 find_package(Boost COMPONENTS system REQUIRED)
 find_package(spdlog REQUIRED)
+find_library(VLC_LIBRARY vlc)
 
 target_compile_definitions(${MODULE_NAME}
     PUBLIC
@@ -29,6 +30,7 @@ target_link_libraries(${MODULE_NAME}
         ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARIES}
         spdlog::spdlog
+        ${VLC_LIBRARY}
         glad
         imgui
 )

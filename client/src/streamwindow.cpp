@@ -1,5 +1,7 @@
 #include "streamwindow.h"
 
+#include "broadcaster.h"
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -26,12 +28,26 @@ StreamWindow::StreamWindow() : Window()
         connectionFuture_ = std::async(std::launch::async, [this, receiverEndpoint]() {
             spdlog::debug("Client started");
             client_ = ST::Network::Client::create(ioService_, receiverEndpoint);
+            client_->setOnStreamReceived([this](ST::Network::Client::StreamData data) {
+                // TODO producer thread
+            });
             client_->receive();
             client_->getStreams();
             ioService_.restart();
             ioService_.run();
             spdlog::debug("Client closed");
         });
+    });
+
+    streamSelectionWidget_.setOnBroadcastClicked([this]() {
+        if (Broadcaster::instance()->started())
+            Broadcaster::instance()->stop();
+        else
+            Broadcaster::instance()->start();
+    });
+
+    Broadcaster::instance()->setOnNewFrame([this](ST::Broadcaster::Frame frame) {
+        client_->sendStream(frame.data(), frame.size());
     });
 }
 
@@ -68,6 +84,7 @@ void StreamWindow::render()
 
 void StreamWindow::renderBackground()
 {
+    // TODO render frame
     Window::renderBackground();
 }
 

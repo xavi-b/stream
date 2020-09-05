@@ -2,18 +2,43 @@
 
 #include "imgui.h"
 
+#include "broadcaster.h"
+
 namespace ST::UI
 {
 
 void StreamSelectionWidget::render()
 {
-    float height = 200;
+    int   buttonHeight = 20;
+    float height       = reduced_ ? buttonHeight + 16 : 200;
     ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y - height), 0);
     ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, height), 0);
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
                                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNav;
 
     ImGui::Begin("Streams", NULL, window_flags);
+
+    int width = ImGui::GetWindowContentRegionMax().x;
+
+    if (ImGui::Button(ST::Broadcaster::instance()->started() ? "Stop" : "Broadcast", ImVec2(100, buttonHeight)))
+    {
+        if (onBroadcastClicked_)
+            onBroadcastClicked_();
+    }
+
+    int buttonWidth = 20;
+    ImGui::SameLine(width - buttonWidth);
+
+    if (ImGui::Button(reduced_ ? "^" : "X", ImVec2(buttonWidth, buttonHeight)))
+    {
+        reduced_ = !reduced_;
+    }
+
+    if (reduced_)
+    {
+        ImGui::End();
+        return;
+    }
 
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 1.0f));
@@ -44,6 +69,11 @@ void StreamSelectionWidget::render()
     ImGui::PopStyleVar(2);
 
     ImGui::End();
+}
+
+void StreamSelectionWidget::setOnBroadcastClicked(std::function<void()> f)
+{
+    onBroadcastClicked_ = f;
 }
 
 } // namespace ST::UI

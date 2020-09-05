@@ -39,6 +39,16 @@ void Client::send()
                                       boost::asio::placeholders::bytes_transferred));
 }
 
+void Client::sendStream(char* data, size_t size)
+{
+    socket_.async_send_to(boost::asio::buffer(data, size),
+                          serverEndpoint_,
+                          boost::bind(&Client::handleSend,
+                                      shared_from_this(),
+                                      boost::asio::placeholders::error,
+                                      boost::asio::placeholders::bytes_transferred));
+}
+
 void Client::getStreams()
 {
     // TODO getStreams
@@ -62,6 +72,11 @@ void Client::close()
     socket_.close();
 }
 
+void Client::setOnStreamReceived(StreamReceivedCallback f)
+{
+    onStreamReceived_ = f;
+}
+
 Client::Client(boost::asio::io_service& ioService, boost::asio::ip::udp::endpoint serverEndpoint)
     : socket_(ioService, udp::udp::v4()), serverEndpoint_(serverEndpoint), deadlineTimer_(ioService), connected_(false)
 {
@@ -71,15 +86,31 @@ void Client::handleReceive(const boost::system::error_code& error, size_t bytesT
 {
     spdlog::debug("handleReceive");
 
-    if (!error)
+    if (!error || error == boost::asio::error::message_size)
     {
+        std::string stringData = std::string(networkBuffer_.data(), bytesTransferred);
+
         spdlog::debug("Received from {}: {}",
                       serverEndpoint_.address().to_string(),
-                      std::string(networkBuffer_.data(), bytesTransferred));
+                      stringData);
+
         connected_.store(true);
 
-        // TODO if stream list
-        // TODO if stream
+        if(stringData.rfind("getStreams", 0) == 0)
+        {
+            // TODO getStreams
+        }
+        else // stream
+        {
+            // TODO if error == boost::asio::error::message_size
+            {
+            }
+
+            StreamData data(networkBuffer_.data(), networkBuffer_.data() + bytesTransferred);
+            if(onStreamReceived_)
+                onStreamReceived_(data);
+        }
+
         receive();
     }
     else

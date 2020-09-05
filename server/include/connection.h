@@ -12,7 +12,7 @@ namespace ST
 
 class Connection
 {
-    using receiving_buffer = boost::array<char, 1>;
+    using receiving_buffer = boost::array<char, 4096>;
 
 public:
     Connection();

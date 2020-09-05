@@ -13,9 +13,11 @@ namespace ST::Network
 
 class Client : public std::enable_shared_from_this<Client>
 {
-    using shared_client = std::shared_ptr<Client>;
-
 public:
+    using shared_client          = std::shared_ptr<Client>;
+    using StreamData             = std::vector<char>;
+    using StreamReceivedCallback = std::function<void(StreamData)>;
+
     ~Client();
     static shared_client create(boost::asio::io_service& ioService, boost::asio::ip::udp::endpoint serverEndpoint)
     {
@@ -24,11 +26,14 @@ public:
 
     void receive();
     void send();
+    void sendStream(char* data, size_t size);
     void getStreams();
 
     bool isConnected() const;
 
     void close();
+
+    void setOnStreamReceived(StreamReceivedCallback f);
 
 private:
     Client(boost::asio::io_service& ioService, boost::asio::ip::udp::endpoint serverEndpoint);
@@ -40,9 +45,11 @@ private:
     boost::asio::ip::udp::socket   socket_;
     boost::asio::ip::udp::endpoint serverEndpoint_;
     boost::asio::deadline_timer    deadlineTimer_;
-    boost::array<char, 128>        networkBuffer_;
+    boost::array<char, 4096>       networkBuffer_;
 
     std::atomic<bool> connected_;
+
+    StreamReceivedCallback onStreamReceived_;
 };
 
 } // namespace ST::Network

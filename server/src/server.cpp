@@ -25,6 +25,8 @@ void Server::receive()
                                            connection,
                                            boost::asio::placeholders::error,
                                            boost::asio::placeholders::bytes_transferred));
+
+    // TODO timer sendStream
 }
 
 void Server::keepAlive()
@@ -61,32 +63,26 @@ void Server::handleReceive(shared_connection                connection,
 
     if (!error || error == boost::asio::error::message_size)
     {
-        spdlog::debug("Received from {}: {}",
-                      connection->endpoint().address().to_string(),
-                      std::string(connection->buffer().data(), bytesTransferred));
+        std::string stringData = std::string(connection->buffer().data(), bytesTransferred);
+
+        spdlog::debug("Received from {}: {}", connection->endpoint().address().to_string(), stringData);
 
         addConnection(connection);
 
-        // TODO if getStreams
+        if (stringData.rfind("getStreams", 0) == 0)
         {
-            boost::shared_ptr<std::string> message(new std::string("test"));
-
-            socket_.async_send_to(boost::asio::buffer(*message),
-                                  connection->endpoint(),
-                                  boost::bind(&Server::handleSend,
-                                              this,
-                                              connection,
-                                              boost::asio::placeholders::error,
-                                              boost::asio::placeholders::bytes_transferred));
+            // TODO getStreams
         }
-
-        // TODO if selectStream
+        else if (stringData.rfind("selectStream", 0) == 0)
         {
-            // TODO select stream
+            // TODO selectStream
         }
-
-        // TODO if sendStream
+        else // stream
         {
+            // TODO if error == boost::asio::error::message_size
+            {
+            }
+
             for (auto const& c : connections_)
             {
                 if (c == connection)
@@ -94,10 +90,8 @@ void Server::handleReceive(shared_connection                connection,
 
                 // TODO if selected broadcast
                 {
-                    // TODO broadcast received data
-                    boost::shared_ptr<std::string> message(new std::string("broadcast selected channel"));
-
-                    socket_.async_send_to(boost::asio::buffer(*message),
+                    // TODO buffer size
+                    socket_.async_send_to(boost::asio::buffer(connection->buffer()),
                                           c->endpoint(),
                                           boost::bind(&Server::handleSend,
                                                       this,
