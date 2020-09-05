@@ -1,7 +1,77 @@
 #include "broadcaster.h"
 
+#include <spdlog/spdlog.h>
+
 namespace ST
 {
+
+void cbAudioPrerender(void* p_audio_data, uint8_t** pp_pcm_buffer, unsigned int size)
+{
+    Broadcaster::instance()->audioPrerender(p_audio_data, pp_pcm_buffer, size);
+}
+
+void cbAudioPostrender(void*        p_audio_data,
+                       uint8_t*     p_pcm_buffer,
+                       unsigned int channels,
+                       unsigned int rate,
+                       unsigned int nb_samples,
+                       unsigned int bits_per_sample,
+                       unsigned int size,
+                       int64_t      pts)
+{
+    Broadcaster::instance()->audioPostrender(
+        p_audio_data, p_pcm_buffer, channels, rate, nb_samples, bits_per_sample, size, pts);
+}
+
+void cbVideoPrerender(void* p_video_data, uint8_t** pp_pixel_buffer, int size)
+{
+    Broadcaster::instance()->videoPrerender(p_video_data, pp_pixel_buffer, size);
+}
+
+void cbVideoPostrender(
+    void* p_video_data, uint8_t* p_pixel_buffer, int width, int height, int pixel_pitch, int size, int64_t pts)
+{
+    Broadcaster::instance()->videoPostrender(p_video_data, p_pixel_buffer, width, height, pixel_pitch, size, pts);
+}
+
+void Broadcaster::audioPrerender(void* p_audio_data, uint8_t** pp_pcm_buffer, unsigned int size)
+{
+    spdlog::debug("audioPrerender");
+    audioBuffer_.resize(size);
+    *pp_pcm_buffer = audioBuffer_.data();
+}
+
+void Broadcaster::audioPostrender(void*        p_audio_data,
+                                  uint8_t*     p_pcm_buffer,
+                                  unsigned int channels,
+                                  unsigned int rate,
+                                  unsigned int nb_samples,
+                                  unsigned int bits_per_sample,
+                                  unsigned int size,
+                                  int64_t      pts)
+{
+    spdlog::debug("audioPostrender");
+}
+
+void Broadcaster::videoPrerender(void* p_video_data, uint8_t** pp_pixel_buffer, int size)
+{
+    spdlog::debug("videoPrerender");
+    videoBuffer_.resize(size);
+    *pp_pixel_buffer = videoBuffer_.data();
+}
+
+void Broadcaster::videoPostrender(
+    void* p_video_data, uint8_t* p_pixel_buffer, int width, int height, int pixel_pitch, int size, int64_t pts)
+{
+    spdlog::debug("videoPostrender");
+    if(onNewFrame_)
+    {
+        Frame frame;
+        frame.resize(size);
+        memcpy(frame.data(), p_pixel_buffer, size);
+        onNewFrame_(frame);
+    }
+}
 
 Broadcaster::~Broadcaster()
 {
@@ -42,21 +112,23 @@ void Broadcaster::setOnNewFrame(NewFrameCallback f)
 
 Broadcaster::Broadcaster()
 {
+    std::ostringstream stream;
+    stream << "#transcode{vcodec=h264,vb=800,scale=1,acodec=mpga,ab=128,channels=2,samplerate=44100}:smem{";
+    stream << "video-prerender-callback=" << (long long int)(intptr_t)(void*)&cbVideoPrerender << ",";
+    stream << "video-postrender-callback=" << (long long int)(intptr_t)(void*)&cbVideoPostrender << ",";
+    stream << "audio-prerender-callback=" << (long long int)(intptr_t)(void*)&cbAudioPrerender << ",";
+    stream << "audio-postrender-callback=" << (long long int)(intptr_t)(void*)&cbAudioPostrender << ",";
+    stream << "audio-data=" << (long long int)0 << ",";
+    stream << "video-data=" << (long long int)0 << "";
+    stream << "},";
+
     inst_ = libvlc_new(0, NULL);
 
     // TODO select monitor
     std::vector<const char*> params = {
-        "screen-top=0", "screen-left=0", "screen-width=1920", "screen-height=1080", "screen-fps=10"};
+        "sout", "screen-top=0", "screen-left=0", "screen-width=1920", "screen-height=1080", "screen-fps=10"};
 
-    libvlc_vlm_add_broadcast(
-        inst_,
-        "stream",
-        "screen://",
-        "#transcode{vcodec=h264,vb=800,scale=1,acodec=mpga,ab=128,channels=2,samplerate=44100}:http{mux=ts,dst=:7777/}",
-        params.size(),
-        params.data(),
-        1,
-        0);
+    libvlc_vlm_add_broadcast(inst_, "stream", "screen://", stream.str().c_str(), params.size(), params.data(), 1, 0);
 }
 
 } // namespace ST

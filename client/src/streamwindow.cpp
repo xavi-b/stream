@@ -30,7 +30,6 @@ StreamWindow::StreamWindow() : Window()
             client_ = ST::Network::Client::create(ioService_, receiverEndpoint);
             client_->setOnStreamReceived([this](ST::Network::Client::StreamData data) {
                 // TODO producer thread
-                texture_ = data;
             });
             client_->setOnGetStreamsReceived([this](std::vector<std::string> const& streams) {
                 streamSelectionWidget_.streams() = streams;
@@ -50,11 +49,11 @@ StreamWindow::StreamWindow() : Window()
             Broadcaster::instance()->start();
     });
 
-    streamSelectionWidget_.setOnGetStreamsClicked([this](){
+    streamSelectionWidget_.setOnGetStreamsClicked([this]() {
         client_->getStreams();
     });
 
-    streamSelectionWidget_.setOnSelectStreamClicked([this](std::string const& stream){
+    streamSelectionWidget_.setOnSelectStreamClicked([this](std::string const& stream) {
         client_->selectStream(stream);
     });
 
