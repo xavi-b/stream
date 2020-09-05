@@ -6,13 +6,19 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "glad/glad.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+#include <GLFW/glfw3.h>
 #include <spdlog/spdlog.h>
 
 #include <chrono>
 #include <exception>
+
+#include <cmrc/cmrc.hpp>
+CMRC_DECLARE(ST::RC);
 
 namespace ST::UI
 {
@@ -60,6 +66,15 @@ StreamWindow::StreamWindow() : Window()
     Broadcaster::instance()->setOnNewFrame([this](ST::Broadcaster::Frame frame) {
         client_->sendStream(frame.data(), frame.size());
     });
+
+    auto fs = cmrc::ST::RC::get_filesystem();
+    if(!fs.exists("logo.png"))
+        throw std::runtime_error("Resource file logo.png does not exists !");
+    auto iconFile = fs.open("logo.png");
+    GLFWimage icons[1];
+    icons[0].pixels = stbi_load_from_memory((unsigned char*)&(*iconFile.begin()), iconFile.size(), &icons[0].width, &icons[0].height, NULL, 4);
+    glfwSetWindowIcon(window_, 1, icons);
+    stbi_image_free(icons[0].pixels);
 
     glGenTextures(1, &bgTextureId_);
     glBindTexture(GL_TEXTURE_2D, bgTextureId_);

@@ -6,3 +6,9 @@
 	path = third-party/glad
 	url = git@github.com:Dav1dde/glad.git
 	branch = 5bf3eda6da606324999775b88a90ed572202be93
+[submodule "third-party/cmrc"]
+	path = third-party/cmrc
+	url = git@github.com:vector-of-bool/cmrc.git
+[submodule "third-party/stb"]
+	path = third-party/stb
+	url = git@github.com:nothings/stb.git

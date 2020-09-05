@@ -22,6 +22,7 @@ target_include_directories(${MODULE_NAME}
         ${OPENGL_INCLUDE_DIR}
         ${PROJECT_SOURCE_DIR}/third-party/glad/include
         ${PROJECT_SOURCE_DIR}/third-party/imgui
+        ${PROJECT_SOURCE_DIR}/third-party/stb
 )
 
 target_link_libraries(${MODULE_NAME}
@@ -35,6 +36,8 @@ target_link_libraries(${MODULE_NAME}
         imgui
 )
 
+include(${PROJECT_SOURCE_DIR}/third-party/cmrc/CMakeRC.cmake)
+
 # sources
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
@@ -43,3 +46,7 @@ target_include_directories(${MODULE_NAME}
         external
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
+
+# resources
+cmrc_add_resource_library(${MODULE_NAME}-resources NAMESPACE ST::RC "${CMAKE_CURRENT_SOURCE_DIR}/logo.png")
+target_link_libraries(${MODULE_NAME} PRIVATE ${MODULE_NAME}-resources)
