@@ -9,6 +9,11 @@ Connection::Connection()
 {
 }
 
+boost::uuids::uuid& Connection::uuid()
+{
+    return uuid_;
+}
+
 boost::asio::ip::udp::endpoint& Connection::endpoint()
 {
     return remoteEndpoint_;

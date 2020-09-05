@@ -7,7 +7,10 @@
 #include "streamselectionwidget.h"
 #include "client.h"
 
+#include <glad/glad.h>
+
 #include <future>
+#include <vector>
 
 namespace ST::UI
 {
@@ -37,6 +40,9 @@ private:
     ST::UI::ConnectionWidget      connectionWidget_;
     ST::UI::ConnectingWidget      connectingWidget_;
     ST::UI::StreamSelectionWidget streamSelectionWidget_;
+
+    std::vector<char> texture_; // TODO temp
+    GLuint            bgTextureId_;
 };
 
 } // namespace ST::UI

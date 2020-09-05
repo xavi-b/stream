@@ -26,6 +26,14 @@ void StreamSelectionWidget::render()
             onBroadcastClicked_();
     }
 
+    ImGui::SameLine();
+
+    if (ImGui::Button("Get Streams", ImVec2(100, buttonHeight)))
+    {
+        if (onGetStreamsClicked_)
+            onGetStreamsClicked_();
+    }
+
     int buttonWidth = 20;
     ImGui::SameLine(width - buttonWidth);
 
@@ -44,26 +52,22 @@ void StreamSelectionWidget::render()
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 1.0f));
     ImVec2 scrolling_child_size = ImGui::GetContentRegionAvail();
     ImGui::BeginChild("scrolling", scrolling_child_size, true, ImGuiWindowFlags_HorizontalScrollbar);
-    for (int line = 0; line < 6; line++)
+    for (size_t i = 0; i < streams_.size(); ++i)
     {
-        // Display random stuff. For the sake of this trivial demo we are using basic Button() + SameLine()
-        // If you want to create your own time line for a real application you may be better off manipulating
-        // the cursor position yourself, aka using SetCursorPos/SetCursorScreenPos to position the widgets
-        // yourself. You may also want to use the lower-level ImDrawList API.
-        int num_buttons = 10 + ((line & 1) ? line * 9 : line * 3);
-        for (int n = 0; n < num_buttons; n++)
+        if (i > 0)
+            ImGui::SameLine();
+
+        float hue = i * 0.05f;
+        ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(hue, 0.6f, 0.6f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(hue, 0.7f, 0.7f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(hue, 0.8f, 0.8f));
+        int size = ImGui::GetContentRegionAvail().y;
+        if (ImGui::Button(streams_[i].c_str(), ImVec2(size, size)))
         {
-            if (n > 0)
-                ImGui::SameLine();
-            ImGui::PushID(n + line * 1000);
-            float hue = n * 0.05f;
-            ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(hue, 0.6f, 0.6f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(hue, 0.7f, 0.7f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(hue, 0.8f, 0.8f));
-            ImGui::Button("FizzBuzz", ImVec2(40.0f, 0.0f));
-            ImGui::PopStyleColor(3);
-            ImGui::PopID();
+            if (onSelectStreamClicked_)
+                onSelectStreamClicked_(streams_[i]);
         }
+        ImGui::PopStyleColor(3);
     }
     ImGui::EndChild();
     ImGui::PopStyleVar(2);
@@ -74,6 +78,26 @@ void StreamSelectionWidget::render()
 void StreamSelectionWidget::setOnBroadcastClicked(std::function<void()> f)
 {
     onBroadcastClicked_ = f;
+}
+
+void StreamSelectionWidget::setOnGetStreamsClicked(std::function<void()> f)
+{
+    onGetStreamsClicked_ = f;
+}
+
+void StreamSelectionWidget::setOnSelectStreamClicked(std::function<void(std::string const&)> f)
+{
+    onSelectStreamClicked_ = f;
+}
+
+std::vector<std::string>& StreamSelectionWidget::streams()
+{
+    return streams_;
+}
+
+std::vector<std::string> const& StreamSelectionWidget::streams() const
+{
+    return streams_;
 }
 
 } // namespace ST::UI

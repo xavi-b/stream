@@ -5,6 +5,7 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/uuid/uuid.hpp>
 #include <unordered_set>
 
 namespace ST
@@ -17,10 +18,12 @@ class Connection
 public:
     Connection();
 
+    boost::uuids::uuid&             uuid();
     boost::asio::ip::udp::endpoint& endpoint();
     receiving_buffer&               buffer();
 
 private:
+    boost::uuids::uuid             uuid_;
     boost::asio::ip::udp::endpoint remoteEndpoint_;
     receiving_buffer               receivingBuffer_;
 };

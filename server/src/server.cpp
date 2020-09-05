@@ -71,7 +71,27 @@ void Server::handleReceive(shared_connection                connection,
 
         if (stringData.rfind("getStreams", 0) == 0)
         {
-            // TODO getStreams
+            std::string uuid = stringData.substr(strlen("getStreams"));
+            spdlog::debug("getStreams uuid: {}", uuid);
+            connection->uuid() = boost::lexical_cast<boost::uuids::uuid>(uuid);
+
+            boost::shared_ptr<std::string> message = boost::make_shared<std::string>("getStreams");
+
+            for (auto const& c : connections_)
+            {
+                if (c == connection)
+                    continue;
+
+                (*message) += boost::lexical_cast<std::string>(c->uuid()) + '|';
+            }
+
+            socket_.async_send_to(boost::asio::buffer(*message),
+                                  connection->endpoint(),
+                                  boost::bind(&Server::handleSend,
+                                              this,
+                                              connection,
+                                              boost::asio::placeholders::error,
+                                              boost::asio::placeholders::bytes_transferred));
         }
         else if (stringData.rfind("selectStream", 0) == 0)
         {

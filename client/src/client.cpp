@@ -24,14 +24,11 @@ void Client::receive()
         boost::bind(&Client::handleTimeout, shared_from_this(), boost::asio::placeholders::error));
 }
 
-void Client::send()
+void Client::selectStream(std::string const& stream)
 {
-    // TODO getStreams
-    // TODO selectStream
-    // TODO sendStream
+    boost::shared_ptr<std::string> message = boost::make_shared<std::string>("selectStream" + stream);
 
-    boost::array<char, 1> sendBuffer = {0};
-    socket_.async_send_to(boost::asio::buffer(sendBuffer),
+    socket_.async_send_to(boost::asio::buffer(*message),
                           serverEndpoint_,
                           boost::bind(&Client::handleSend,
                                       shared_from_this(),
@@ -51,10 +48,10 @@ void Client::sendStream(char* data, size_t size)
 
 void Client::getStreams()
 {
-    // TODO getStreams
+    boost::shared_ptr<std::string> message =
+        boost::make_shared<std::string>("getStreams" + boost::lexical_cast<std::string>(uuid_));
 
-    boost::array<char, 1> sendBuffer = {0};
-    socket_.async_send_to(boost::asio::buffer(sendBuffer),
+    socket_.async_send_to(boost::asio::buffer(*message),
                           serverEndpoint_,
                           boost::bind(&Client::handleSend,
                                       shared_from_this(),
@@ -77,8 +74,14 @@ void Client::setOnStreamReceived(StreamReceivedCallback f)
     onStreamReceived_ = f;
 }
 
+void Client::setOnGetStreamsReceived(GetStreamsReceivedCallback f)
+{
+    onGetStreamsReceived_ = f;
+}
+
 Client::Client(boost::asio::io_service& ioService, boost::asio::ip::udp::endpoint serverEndpoint)
-    : socket_(ioService, udp::udp::v4()), serverEndpoint_(serverEndpoint), deadlineTimer_(ioService), connected_(false)
+    : uuid_(boost::uuids::random_generator()()), socket_(ioService, udp::udp::v4()), serverEndpoint_(serverEndpoint),
+      deadlineTimer_(ioService), connected_(false)
 {
 }
 
@@ -90,15 +93,29 @@ void Client::handleReceive(const boost::system::error_code& error, size_t bytesT
     {
         std::string stringData = std::string(networkBuffer_.data(), bytesTransferred);
 
-        spdlog::debug("Received from {}: {}",
-                      serverEndpoint_.address().to_string(),
-                      stringData);
+        spdlog::debug("Received from {}: {}", serverEndpoint_.address().to_string(), stringData);
 
         connected_.store(true);
 
-        if(stringData.rfind("getStreams", 0) == 0)
+        if (stringData.rfind("alive", 0) == 0)
         {
-            // TODO getStreams
+        }
+        else if (stringData.rfind("getStreams", 0) == 0)
+        {
+            std::string str = stringData.substr(strlen("getStreams"));
+            spdlog::debug("getStreams uuids: '{}'", str);
+
+            std::vector<std::string> uuids;
+            boost::split(uuids, str, [](char c) {
+                return c == '|';
+            });
+
+            uuids.erase(std::remove_if(uuids.begin(), uuids.end(), [](std::string const& e) {
+                return e.empty();
+            }));
+
+            if (onGetStreamsReceived_)
+                onGetStreamsReceived_(uuids);
         }
         else // stream
         {
@@ -107,7 +124,7 @@ void Client::handleReceive(const boost::system::error_code& error, size_t bytesT
             }
 
             StreamData data(networkBuffer_.data(), networkBuffer_.data() + bytesTransferred);
-            if(onStreamReceived_)
+            if (onStreamReceived_)
                 onStreamReceived_(data);
         }
 

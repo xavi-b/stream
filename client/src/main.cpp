@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-int main(int argc, char** argv)
+int main(int, char**)
 {
 #ifdef DEBUG
     spdlog::set_level(spdlog::level::debug);

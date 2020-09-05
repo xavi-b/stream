@@ -30,6 +30,10 @@ StreamWindow::StreamWindow() : Window()
             client_ = ST::Network::Client::create(ioService_, receiverEndpoint);
             client_->setOnStreamReceived([this](ST::Network::Client::StreamData data) {
                 // TODO producer thread
+                texture_ = data;
+            });
+            client_->setOnGetStreamsReceived([this](std::vector<std::string> const& streams) {
+                streamSelectionWidget_.streams() = streams;
             });
             client_->receive();
             client_->getStreams();
@@ -46,9 +50,25 @@ StreamWindow::StreamWindow() : Window()
             Broadcaster::instance()->start();
     });
 
+    streamSelectionWidget_.setOnGetStreamsClicked([this](){
+        client_->getStreams();
+    });
+
+    streamSelectionWidget_.setOnSelectStreamClicked([this](std::string const& stream){
+        client_->selectStream(stream);
+    });
+
     Broadcaster::instance()->setOnNewFrame([this](ST::Broadcaster::Frame frame) {
         client_->sendStream(frame.data(), frame.size());
     });
+
+    glGenTextures(1, &bgTextureId_);
+    glBindTexture(GL_TEXTURE_2D, bgTextureId_);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 }
 
 StreamWindow::~StreamWindow()
@@ -84,8 +104,31 @@ void StreamWindow::render()
 
 void StreamWindow::renderBackground()
 {
-    // TODO render frame
     Window::renderBackground();
+
+    int display_w, display_h;
+    glfwGetFramebufferSize(window_, &display_w, &display_h);
+    glViewport(0, 0, display_w, display_h);
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, bgTextureId_);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, display_w, display_h, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, texture_.data());
+
+    glBegin(GL_QUADS);
+    {
+        glTexCoord2f(0.0f, 0.0f);
+        glVertex3f(0.0f, 0.0f, 0.0f);
+        glTexCoord2f(0.0f, 1.0f);
+        glVertex3f(0.0f, 1.0f, 0.0f);
+        glTexCoord2f(1.0f, 1.0f);
+        glVertex3f(1.0f, 1.0f, 0.0f);
+        glTexCoord2f(1.0f, 0.0f);
+        glVertex3f(1.0f, 0.0f, 0.0f);
+    }
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
 }
 
 void StreamWindow::onClose()
