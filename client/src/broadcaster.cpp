@@ -69,6 +69,7 @@ void Broadcaster::videoPostrender(
         Frame frame;
         frame.resize(size);
         memcpy(frame.data(), p_pixel_buffer, size);
+        spdlog::debug("size: {}", size);
         onNewFrame_(frame);
     }
 }
@@ -113,7 +114,7 @@ void Broadcaster::setOnNewFrame(NewFrameCallback f)
 Broadcaster::Broadcaster()
 {
     std::ostringstream stream;
-    stream << "#transcode{vcodec=h264,vb=800,scale=1,acodec=mpga,ab=128,channels=2,samplerate=44100}:smem{";
+    stream << "#transcode{vcodec=h264,vb=800,scale=1,acodec=mp3,ab=128,channels=2,samplerate=44100}:smem{";
     stream << "video-prerender-callback=" << (long long int)(intptr_t)(void*)&cbVideoPrerender << ",";
     stream << "video-postrender-callback=" << (long long int)(intptr_t)(void*)&cbVideoPostrender << ",";
     stream << "audio-prerender-callback=" << (long long int)(intptr_t)(void*)&cbAudioPrerender << ",";
@@ -126,7 +127,7 @@ Broadcaster::Broadcaster()
 
     // TODO select monitor
     std::vector<const char*> params = {
-        "sout", "screen-top=0", "screen-left=0", "screen-width=1920", "screen-height=1080", "screen-fps=10"};
+        "sout", "sout-all", "screen-top=0", "screen-left=0", "screen-width=1920", "screen-height=1080", "screen-fps=10"};
 
     libvlc_vlm_add_broadcast(inst_, "stream", "screen://", stream.str().c_str(), params.size(), params.data(), 1, 0);
 }

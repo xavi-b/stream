@@ -33,7 +33,7 @@ public:
 
     void receive();
     void selectStream(std::string const& stream);
-    void sendStream(char* data, size_t size);
+    void sendStream(unsigned char* data, size_t size);
     void getStreams();
 
     bool isConnected() const;

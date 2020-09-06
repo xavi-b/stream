@@ -65,10 +65,10 @@ void Server::handleReceive(shared_connection                connection,
     {
         std::string stringData = std::string(connection->buffer().data(), bytesTransferred);
 
-        spdlog::debug("Received from {}: {}", connection->endpoint().address().to_string(), stringData);
-
         if (stringData.rfind("getStreams", 0) == 0)
         {
+            spdlog::debug("Received from {}: {}", connection->endpoint().address().to_string(), stringData);
+
             std::string uuid = stringData.substr(strlen("getStreams"));
             spdlog::debug("getStreams uuid: {}", uuid);
             connection->uuid() = boost::lexical_cast<boost::uuids::uuid>(uuid);
@@ -95,12 +95,16 @@ void Server::handleReceive(shared_connection                connection,
         }
         else if (stringData.rfind("selectStream", 0) == 0)
         {
+            spdlog::debug("Received from {}: {}", connection->endpoint().address().to_string(), stringData);
             // TODO selectStream
         }
         else // stream
         {
-            // TODO if error == boost::asio::error::message_size
+            spdlog::debug("Received stream from {}, size {}", connection->endpoint().address().to_string(), bytesTransferred);
+            if (error == boost::asio::error::message_size)
             {
+                spdlog::warn("boost::asio::error::message_size");
+                // TODO
             }
 
             for (auto const& c : connections_)
@@ -111,7 +115,7 @@ void Server::handleReceive(shared_connection                connection,
                 // TODO if selected broadcast
                 {
                     // TODO buffer size
-                    socket_.async_send_to(boost::asio::buffer(connection->buffer()),
+                    socket_.async_send_to(boost::asio::buffer(connection->buffer().data(), bytesTransferred),
                                           c->endpoint(),
                                           boost::bind(&Server::handleSend,
                                                       this,

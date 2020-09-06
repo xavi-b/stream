@@ -36,7 +36,7 @@ void Client::selectStream(std::string const& stream)
                                       boost::asio::placeholders::bytes_transferred));
 }
 
-void Client::sendStream(char* data, size_t size)
+void Client::sendStream(unsigned char* data, size_t size)
 {
     spdlog::debug("sendStream");
     socket_.async_send_to(boost::asio::buffer(data, size),
@@ -94,15 +94,16 @@ void Client::handleReceive(const boost::system::error_code& error, size_t bytesT
     {
         std::string stringData = std::string(networkBuffer_.data(), bytesTransferred);
 
-        spdlog::debug("Received from {}: {}", serverEndpoint_.address().to_string(), stringData);
-
         connected_.store(true);
 
         if (stringData.rfind("alive", 0) == 0)
         {
+            spdlog::debug("Received from {}: {}", serverEndpoint_.address().to_string(), stringData);
         }
         else if (stringData.rfind("getStreams", 0) == 0)
         {
+            spdlog::debug("Received from {}: {}", serverEndpoint_.address().to_string(), stringData);
+
             std::string str = stringData.substr(strlen("getStreams"));
             spdlog::debug("getStreams uuids: '{}'", str);
 
@@ -120,8 +121,11 @@ void Client::handleReceive(const boost::system::error_code& error, size_t bytesT
         }
         else // stream
         {
-            // TODO if error == boost::asio::error::message_size
+            spdlog::debug("Received stream from {}, size: {}", serverEndpoint_.address().to_string(), bytesTransferred);
+            if (error == boost::asio::error::message_size)
             {
+                spdlog::warn("boost::asio::error::message_size");
+                // TODO
             }
 
             StreamData data(networkBuffer_.data(), networkBuffer_.data() + bytesTransferred);
@@ -137,9 +141,9 @@ void Client::handleReceive(const boost::system::error_code& error, size_t bytesT
     }
 }
 
-void Client::handleSend(const boost::system::error_code& error, size_t /*bytesTransferred*/)
+void Client::handleSend(const boost::system::error_code& error, size_t bytesTransferred)
 {
-    spdlog::debug("handleSend");
+    spdlog::debug("handleSend {}", bytesTransferred);
 
     if (!error)
     {

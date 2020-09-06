@@ -7,10 +7,12 @@
 #include "streamselectionwidget.h"
 #include "client.h"
 
-#include <glad/glad.h>
+#include "glad/glad.h"
 
 #include <future>
 #include <vector>
+
+#include "codec/api/svc/codec_api.h"
 
 namespace ST::UI
 {
@@ -31,6 +33,8 @@ public:
     virtual void renderBackground() override;
     virtual void onClose() override;
 
+    void decodeStreamData(char* data, int size);
+
 private:
     ConnectionState                      connectionState_ = ConnectionState::NotConnected;
     std::future<void>                    connectionFuture_;
@@ -41,8 +45,12 @@ private:
     ST::UI::ConnectingWidget      connectingWidget_;
     ST::UI::StreamSelectionWidget streamSelectionWidget_;
 
-    std::vector<char> texture_; // TODO temp
-    GLuint            bgTextureId_;
+    std::vector<unsigned char> texture_;
+    GLuint                     bgTextureId_;
+
+    ISVCDecoder*   pSvcDecoder_;
+    unsigned char* pData_[3];
+    SDecodingParam sDecParam_ = {0};
 };
 
 } // namespace ST::UI

@@ -25,6 +25,10 @@ namespace ST::UI
 
 StreamWindow::StreamWindow() : Window()
 {
+    WelsCreateDecoder(&pSvcDecoder_);
+    sDecParam_.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_SVC;
+    pSvcDecoder_->Initialize(&sDecParam_);
+
     connectionWidget_.setOnConnectClicked([this]() {
         std::string    host = connectionWidget_.host();
         unsigned short port = connectionWidget_.port();
@@ -35,7 +39,7 @@ StreamWindow::StreamWindow() : Window()
             spdlog::debug("Client started");
             client_ = ST::Network::Client::create(ioService_, receiverEndpoint);
             client_->setOnStreamReceived([this](ST::Network::Client::StreamData data) {
-                // TODO producer thread
+                decodeStreamData(data.data(), data.size());
             });
             client_->setOnGetStreamsReceived([this](std::vector<std::string> const& streams) {
                 streamSelectionWidget_.streams() = streams;
@@ -68,11 +72,12 @@ StreamWindow::StreamWindow() : Window()
     });
 
     auto fs = cmrc::ST::RC::get_filesystem();
-    if(!fs.exists("logo.png"))
+    if (!fs.exists("logo.png"))
         throw std::runtime_error("Resource file logo.png does not exists !");
-    auto iconFile = fs.open("logo.png");
+    auto      iconFile = fs.open("logo.png");
     GLFWimage icons[1];
-    icons[0].pixels = stbi_load_from_memory((unsigned char*)&(*iconFile.begin()), iconFile.size(), &icons[0].width, &icons[0].height, NULL, 4);
+    icons[0].pixels = stbi_load_from_memory(
+        (unsigned char*)&(*iconFile.begin()), iconFile.size(), &icons[0].width, &icons[0].height, NULL, 4);
     glfwSetWindowIcon(window_, 1, icons);
     stbi_image_free(icons[0].pixels);
 
@@ -87,6 +92,8 @@ StreamWindow::StreamWindow() : Window()
 
 StreamWindow::~StreamWindow()
 {
+    pSvcDecoder_->Uninitialize();
+    WelsDestroyDecoder(pSvcDecoder_);
 }
 
 void StreamWindow::render()
@@ -126,8 +133,8 @@ void StreamWindow::renderBackground()
 
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, bgTextureId_);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, display_w, display_h, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, texture_.data());
+    // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_UNSIGNED_BYTE, texture_.data()); // TODO
 
     glBegin(GL_QUADS);
     {
@@ -149,6 +156,50 @@ void StreamWindow::onClose()
 {
     ioService_.stop();
     connectionFuture_.wait();
+}
+
+void StreamWindow::decodeStreamData(char* data, int size)
+{
+    // TODO producer thread
+
+    spdlog::debug("decodeStreamData, size {}: {}", size, std::string(data, size));
+
+    SBufferInfo sDstBufInfo;
+    memset(&sDstBufInfo, 0, sizeof(SBufferInfo));
+    sDstBufInfo.UsrData.sSystemBuffer.iWidth = 1920;
+    sDstBufInfo.UsrData.sSystemBuffer.iHeight = 1080;
+    int iRet = pSvcDecoder_->DecodeFrameNoDelay((unsigned char*)data, size, pData_, &sDstBufInfo);
+    if (iRet != 0)
+    {
+        spdlog::warn("DecodeFrameNoDelay failed: 0x{0:x}", iRet);
+    }
+    if (sDstBufInfo.iBufferStatus == 1)
+    {
+        texture_.resize(size);
+
+        int h = sDstBufInfo.UsrData.sSystemBuffer.iHeight;
+        int w = sDstBufInfo.UsrData.sSystemBuffer.iWidth;
+
+        int frameImageCounter = 0;
+
+        for (int y = 0; y < h; ++y) // traverse through the frame's height
+        {
+            for (int x = 0; x < w; ++x) // traverse through the frame's width
+            {
+                float Y = (float)(pData_[0][y * w + x]) / 255;
+                float U = -0.436 + (float)(pData_[1][y * w + x]) / 255 * (0.436 * 2);
+                float V = -0.615 + (float)(pData_[2][y * w + x]) / 255 * (0.615 * 2);
+
+                float RFormula = Y + 1.13983f * V;
+                float GFormula = Y - 0.39465f * U - 0.58060f * V;
+                float BFormula = Y + 2.03211f * U;
+
+                texture_.data()[frameImageCounter++] = (unsigned char)RFormula;
+                texture_.data()[frameImageCounter++] = (unsigned char)GFormula;
+                texture_.data()[frameImageCounter++] = (unsigned char)BFormula;
+            }
+        }
+    }
 }
 
 } // namespace ST::UI

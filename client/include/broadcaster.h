@@ -13,7 +13,7 @@ namespace ST
 class Broadcaster
 {
 public:
-    using Frame            = std::vector<char>;
+    using Frame            = std::vector<unsigned char>;
     using NewFrameCallback = std::function<void(Frame)>;
 
     void audioPrerender(void* p_audio_data, uint8_t** pp_pcm_buffer, unsigned int size);

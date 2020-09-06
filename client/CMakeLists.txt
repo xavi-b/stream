@@ -38,6 +38,11 @@ target_link_libraries(${MODULE_NAME}
 
 include(${PROJECT_SOURCE_DIR}/third-party/cmrc/CMakeRC.cmake)
 
+set(OPENH264_LIB_NAME openh264)
+set(OPENH264_LIB_FILE "${PROJECT_SOURCE_DIR}/third-party/${OPENH264_LIB_NAME}/${CMAKE_SHARED_LIBRARY_PREFIX}${OPENH264_LIB_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+target_include_directories(${MODULE_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/third-party/${OPENH264_LIB_NAME})
+target_link_libraries(${MODULE_NAME} PUBLIC ${OPENH264_LIB_FILE})
+
 # sources
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
