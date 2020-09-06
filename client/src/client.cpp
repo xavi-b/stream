@@ -14,7 +14,9 @@ Client::~Client()
 
 void Client::receive()
 {
-    socket_.async_receive(boost::asio::buffer(networkBuffer_),
+    boost::asio::streambuf::mutable_buffers_type mutableBuffer = networkBuffer_.prepare(65536);
+
+    socket_.async_receive(boost::asio::buffer(mutableBuffer),
                           boost::bind(&Client::handleReceive,
                                       shared_from_this(),
                                       boost::asio::placeholders::error,
@@ -92,7 +94,7 @@ void Client::handleReceive(const boost::system::error_code& error, size_t bytesT
 
     if (!error || error == boost::asio::error::message_size)
     {
-        std::string stringData = std::string(networkBuffer_.data(), bytesTransferred);
+        std::string stringData = std::string((const char*)networkBuffer_.data().data(), bytesTransferred);
 
         connected_.store(true);
 
@@ -128,11 +130,12 @@ void Client::handleReceive(const boost::system::error_code& error, size_t bytesT
                 // TODO
             }
 
-            StreamData data(networkBuffer_.data(), networkBuffer_.data() + bytesTransferred);
+            StreamData data((const unsigned char*)networkBuffer_.data().data(), ((const unsigned char*)networkBuffer_.data().data()) + bytesTransferred);
             if (onStreamReceived_)
                 onStreamReceived_(data);
         }
 
+        networkBuffer_.consume(bytesTransferred);
         receive();
     }
     else

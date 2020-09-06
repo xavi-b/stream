@@ -158,21 +158,22 @@ void StreamWindow::onClose()
     connectionFuture_.wait();
 }
 
-void StreamWindow::decodeStreamData(char* data, int size)
+void StreamWindow::decodeStreamData(unsigned char* data, int size)
 {
     // TODO producer thread
 
-    spdlog::debug("decodeStreamData, size {}: {}", size, std::string(data, size));
+    spdlog::debug("decodeStreamData, size: {}", size);
 
     SBufferInfo sDstBufInfo;
     memset(&sDstBufInfo, 0, sizeof(SBufferInfo));
     sDstBufInfo.UsrData.sSystemBuffer.iWidth = 1920;
     sDstBufInfo.UsrData.sSystemBuffer.iHeight = 1080;
-    int iRet = pSvcDecoder_->DecodeFrameNoDelay((unsigned char*)data, size, pData_, &sDstBufInfo);
+    int iRet = pSvcDecoder_->DecodeFrameNoDelay(data, size, pData_, &sDstBufInfo);
     if (iRet != 0)
     {
         spdlog::warn("DecodeFrameNoDelay failed: 0x{0:x}", iRet);
     }
+    spdlog::debug("iBufferStatus: {}", sDstBufInfo.iBufferStatus);
     if (sDstBufInfo.iBufferStatus == 1)
     {
         texture_.resize(size);

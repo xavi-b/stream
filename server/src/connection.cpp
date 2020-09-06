@@ -19,9 +19,4 @@ boost::asio::ip::udp::endpoint& Connection::endpoint()
     return remoteEndpoint_;
 }
 
-Connection::receiving_buffer& Connection::buffer()
-{
-    return receivingBuffer_;
-}
-
 } // namespace ST

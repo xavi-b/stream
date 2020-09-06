@@ -17,6 +17,7 @@ namespace ST::Network
 
 class Server
 {
+    using receiving_buffer  = boost::asio::streambuf;
     using shared_connection = std::shared_ptr<Connection>;
 
 public:
@@ -40,6 +41,7 @@ private:
     boost::asio::ip::udp::socket          socket_;
     boost::asio::deadline_timer           aliveTimer_;
     std::unordered_set<shared_connection> connections_;
+    receiving_buffer                      receivingBuffer_;
 };
 
 } // namespace ST::Network

@@ -33,7 +33,7 @@ public:
     virtual void renderBackground() override;
     virtual void onClose() override;
 
-    void decodeStreamData(char* data, int size);
+    void decodeStreamData(unsigned char* data, int size);
 
 private:
     ConnectionState                      connectionState_ = ConnectionState::NotConnected;

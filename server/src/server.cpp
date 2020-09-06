@@ -18,7 +18,9 @@ void Server::receive()
 {
     auto connection = std::make_shared<Connection>();
 
-    socket_.async_receive_from(boost::asio::buffer(connection->buffer()),
+    boost::asio::streambuf::mutable_buffers_type mutableBuffer = receivingBuffer_.prepare(65536);
+
+    socket_.async_receive_from(boost::asio::buffer(mutableBuffer),
                                connection->endpoint(),
                                boost::bind(&Server::handleReceive,
                                            this,
@@ -63,7 +65,7 @@ void Server::handleReceive(shared_connection                connection,
 
     if (!error || error == boost::asio::error::message_size)
     {
-        std::string stringData = std::string(connection->buffer().data(), bytesTransferred);
+        std::string stringData = std::string((const char*)receivingBuffer_.data().data(), bytesTransferred);
 
         if (stringData.rfind("getStreams", 0) == 0)
         {
@@ -100,7 +102,8 @@ void Server::handleReceive(shared_connection                connection,
         }
         else // stream
         {
-            spdlog::debug("Received stream from {}, size {}", connection->endpoint().address().to_string(), bytesTransferred);
+            spdlog::debug(
+                "Received stream from {}, size {}", connection->endpoint().address().to_string(), bytesTransferred);
             if (error == boost::asio::error::message_size)
             {
                 spdlog::warn("boost::asio::error::message_size");
@@ -115,7 +118,7 @@ void Server::handleReceive(shared_connection                connection,
                 // TODO if selected broadcast
                 {
                     // TODO buffer size
-                    socket_.async_send_to(boost::asio::buffer(connection->buffer().data(), bytesTransferred),
+                    socket_.async_send_to(boost::asio::buffer(receivingBuffer_.data().data(), bytesTransferred),
                                           c->endpoint(),
                                           boost::bind(&Server::handleSend,
                                                       this,
@@ -126,6 +129,7 @@ void Server::handleReceive(shared_connection                connection,
             }
         }
 
+        receivingBuffer_.consume(bytesTransferred);
         receive();
     }
     else
@@ -136,9 +140,9 @@ void Server::handleReceive(shared_connection                connection,
 
 void Server::handleSend(shared_connection                connection,
                         const boost::system::error_code& error,
-                        std::size_t /*bytesTransferred*/)
+                        std::size_t bytesTransferred)
 {
-    spdlog::debug("handleSend");
+    spdlog::debug("handleSend {}", bytesTransferred);
 
     if (error)
         removeConnection(connection);
