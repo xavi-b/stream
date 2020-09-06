@@ -168,7 +168,7 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
     memset(&sDstBufInfo, 0, sizeof(SBufferInfo));
     sDstBufInfo.UsrData.sSystemBuffer.iWidth = 1920;
     sDstBufInfo.UsrData.sSystemBuffer.iHeight = 1080;
-    int iRet = pSvcDecoder_->DecodeFrameNoDelay(data, size, pData_, &sDstBufInfo);
+    DECODING_STATE iRet = pSvcDecoder_->DecodeFrameNoDelay(data, size, pData_, &sDstBufInfo);
     if (iRet != 0)
     {
         spdlog::warn("DecodeFrameNoDelay failed: 0x{0:x}", iRet);
