@@ -23,11 +23,52 @@ CMRC_DECLARE(ST::RC);
 namespace ST::UI
 {
 
+static spdlog::level::level_enum openh264_to_spdlog(int level)
+{
+    switch (level)
+    {
+    case WELS_LOG_QUIET:
+        return spdlog::level::level_enum::trace;
+    case WELS_LOG_ERROR:
+        return spdlog::level::level_enum::err;
+    case WELS_LOG_WARNING:
+        return spdlog::level::level_enum::warn;
+    case WELS_LOG_INFO:
+        return spdlog::level::level_enum::info;
+    case WELS_LOG_DEBUG:
+        return spdlog::level::level_enum::debug;
+    case WELS_LOG_DETAIL:
+        return spdlog::level::level_enum::info;
+    default:
+        return spdlog::level::level_enum::debug;
+    }
+}
+
+static void openh264_spdlog(void* context, int level, const char* message)
+{
+    spdlog::log(openh264_to_spdlog(level), message);
+}
+
 StreamWindow::StreamWindow() : Window()
 {
     WelsCreateDecoder(&pSvcDecoder_);
-    sDecParam_.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_SVC;
-    pSvcDecoder_->Initialize(&sDecParam_);
+    sDecParam_.eEcActiveIdc                = ERROR_CON_IDC::ERROR_CON_SLICE_COPY;
+    sDecParam_.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_TYPE::VIDEO_BITSTREAM_DEFAULT;
+
+    int ret = pSvcDecoder_->Initialize(&sDecParam_);
+    if (ret != CM_RETURN::cmResultSuccess)
+    {
+        spdlog::critical("Decoder initialization failed with error: {}", ret);
+    }
+
+    int32_t iErrorConMethod = (int32_t)ERROR_CON_SLICE_MV_COPY_CROSS_IDR_FREEZE_RES_CHANGE;
+    pSvcDecoder_->SetOption(DECODER_OPTION_ERROR_CON_IDC, &iErrorConMethod);
+
+    int               log_level = WELS_LOG_DETAIL;
+    WelsTraceCallback callback_function;
+    callback_function = openh264_spdlog;
+    pSvcDecoder_->SetOption(DECODER_OPTION_TRACE_LEVEL, &log_level);
+    pSvcDecoder_->SetOption(DECODER_OPTION_TRACE_CALLBACK, (void*)&callback_function);
 
     connectionWidget_.setOnConnectClicked([this]() {
         std::string    host = connectionWidget_.host();
@@ -166,8 +207,6 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
 
     SBufferInfo sDstBufInfo;
     memset(&sDstBufInfo, 0, sizeof(SBufferInfo));
-    sDstBufInfo.UsrData.sSystemBuffer.iWidth = 1920;
-    sDstBufInfo.UsrData.sSystemBuffer.iHeight = 1080;
     DECODING_STATE iRet = pSvcDecoder_->DecodeFrameNoDelay(data, size, pData_, &sDstBufInfo);
     if (iRet != 0)
     {
