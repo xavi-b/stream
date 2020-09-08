@@ -114,7 +114,11 @@ void Broadcaster::setOnNewFrame(NewFrameCallback f)
 Broadcaster::Broadcaster()
 {
     std::ostringstream stream;
-    stream << "#transcode{vcodec=h264,venc=x264{profile=baseline},vb=800,scale=0.5,acodec=mp3,ab=128,channels=2,samplerate=44100}:smem{";
+    stream << "#transcode{vcodec=h264,venc=x264{";
+    stream << "keyint=30,bframes=0,ref=1,level=3.0,profile=baseline,hrd=cbr,crf=20,ratetol=1.0,";
+    stream << "vbv-maxrate=1200,vbv-bufsize=1200,preset=ultrafast,tune=zerolatency,aud,lookahead=0,";
+    stream << "sps-id=1,verbose";
+    stream << "},vb=800,scale=0.5,acodec=mp3,ab=128,channels=2,samplerate=44100}:smem{";
     stream << "video-prerender-callback=" << (long long int)(intptr_t)(void*)&cbVideoPrerender << ",";
     stream << "video-postrender-callback=" << (long long int)(intptr_t)(void*)&cbVideoPostrender << ",";
     stream << "audio-prerender-callback=" << (long long int)(intptr_t)(void*)&cbAudioPrerender << ",";
