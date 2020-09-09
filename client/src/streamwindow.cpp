@@ -245,6 +245,30 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
             }
         }
 
+        std::fstream fsyuv("received.yuv", std::fstream::out);
+
+        pY   = pData_[0];
+        pU   = pData_[1];
+        pV   = pData_[2];
+
+        for (int y = 0; y < h; ++y)
+        {
+            fsyuv.write((const char*)pY, w);
+            pY += sDstBufInfo.UsrData.sSystemBuffer.iStride[0];
+        }
+        for (int y = 0; y < h; y+=2)
+        {
+            fsyuv.write((const char*)pU, w/2);
+            pU += sDstBufInfo.UsrData.sSystemBuffer.iStride[1];
+        }
+        for (int y = 0; y < h; y+=2)
+        {
+            fsyuv.write((const char*)pV, w/2);
+            pV += sDstBufInfo.UsrData.sSystemBuffer.iStride[1];
+        }
+
+        fsyuv.close();
+
         std::fstream fs("received.rgb", std::fstream::out);
         fs.write((const char*)texture_.data(), texture_.size());
         fs.close();
