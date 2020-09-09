@@ -121,8 +121,6 @@ SclBroadcaster::SclBroadcaster() : Broadcaster()
             for (auto& m : mons)
             {
                 spdlog::debug("{}", m.Name);
-                SL::Screen_Capture::OffsetX(m, SL::Screen_Capture::OffsetX(m) + 512);
-                SL::Screen_Capture::OffsetY(m, SL::Screen_Capture::OffsetY(m) + 512);
                 SL::Screen_Capture::Height(m, 512);
                 SL::Screen_Capture::Width(m, 512);
             }
