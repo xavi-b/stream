@@ -4,7 +4,9 @@
 
 #include <spdlog/spdlog.h>
 
+#ifdef DEBUG
 #include <fstream>
+#endif
 
 namespace ST
 {
@@ -144,12 +146,13 @@ SclBroadcaster::SclBroadcaster() : Broadcaster()
                 yuv[2].resize(size / 4);
                 ExtractAndConvertToYUV(img, yuv);
 
+#ifdef DEBUG
                 std::fstream fs("test.yuv", std::fstream::out);
                 fs.write((const char*)yuv[0].data(), yuv[0].size());
                 fs.write((const char*)yuv[1].data(), yuv[1].size());
                 fs.write((const char*)yuv[2].data(), yuv[2].size());
                 fs.close();
-                // exit(0);
+#endif
 
                 if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() -
                                                                           onNewFramestart_)

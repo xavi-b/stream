@@ -7,7 +7,7 @@ Broadcaster* Broadcaster::singleton_ = nullptr;
 
 Broadcaster::Broadcaster()
 {
-    if(singleton_)
+    if (singleton_)
         throw std::runtime_error("A broadcaster instance already exists !");
 
     singleton_ = this;

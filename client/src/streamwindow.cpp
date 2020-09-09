@@ -22,7 +22,9 @@
 #include <cmrc/cmrc.hpp>
 CMRC_DECLARE(ST::RC);
 
+#ifdef DEBUG
 #include <fstream>
+#endif
 
 namespace ST::UI
 {
@@ -199,15 +201,17 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
         int w = sDstBufInfo.UsrData.sSystemBuffer.iWidth;
 
         spdlog::debug("format: {}, h: {}, w: {}", sDstBufInfo.UsrData.sSystemBuffer.iFormat, h, w);
-        spdlog::debug("stride[0]: {}, stride[1]: {}", sDstBufInfo.UsrData.sSystemBuffer.iStride[0], sDstBufInfo.UsrData.sSystemBuffer.iStride[1]);
+        spdlog::debug("stride[0]: {}, stride[1]: {}",
+                      sDstBufInfo.UsrData.sSystemBuffer.iStride[0],
+                      sDstBufInfo.UsrData.sSystemBuffer.iStride[1]);
 
         texture_.resize(h * w * 3);
 
         int frameImageCounter = 0;
 
-        unsigned char* pY   = pData_[0];
-        unsigned char* pU   = pData_[1];
-        unsigned char* pV   = pData_[2];
+        unsigned char* pY = pData_[0];
+        unsigned char* pU = pData_[1];
+        unsigned char* pV = pData_[2];
 
         for (int y = 0; y < h; ++y)
         {
@@ -236,8 +240,8 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
             }
 
             pY += sDstBufInfo.UsrData.sSystemBuffer.iStride[0] - w;
-            pU += sDstBufInfo.UsrData.sSystemBuffer.iStride[1] - w/2;
-            pV += sDstBufInfo.UsrData.sSystemBuffer.iStride[1] - w/2;
+            pU += sDstBufInfo.UsrData.sSystemBuffer.iStride[1] - w / 2;
+            pV += sDstBufInfo.UsrData.sSystemBuffer.iStride[1] - w / 2;
 
             if (y % 2)
             {
@@ -246,34 +250,32 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
             }
         }
 
+#ifdef DEBUG
         std::fstream fsyuv("received.yuv", std::fstream::out);
-
-        pY   = pData_[0];
-        pU   = pData_[1];
-        pV   = pData_[2];
-
+        pY = pData_[0];
+        pU = pData_[1];
+        pV = pData_[2];
         for (int y = 0; y < h; ++y)
         {
             fsyuv.write((const char*)pY, w);
             pY += sDstBufInfo.UsrData.sSystemBuffer.iStride[0];
         }
-        for (int y = 0; y < h; y+=2)
+        for (int y = 0; y < h; y += 2)
         {
-            fsyuv.write((const char*)pU, w/2);
+            fsyuv.write((const char*)pU, w / 2);
             pU += sDstBufInfo.UsrData.sSystemBuffer.iStride[1];
         }
-        for (int y = 0; y < h; y+=2)
+        for (int y = 0; y < h; y += 2)
         {
-            fsyuv.write((const char*)pV, w/2);
+            fsyuv.write((const char*)pV, w / 2);
             pV += sDstBufInfo.UsrData.sSystemBuffer.iStride[1];
         }
-
         fsyuv.close();
 
         std::fstream fs("received.rgb", std::fstream::out);
         fs.write((const char*)texture_.data(), texture_.size());
         fs.close();
-        // exit(0);
+#endif
     }
 }
 

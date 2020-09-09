@@ -23,10 +23,10 @@ public:
     virtual void        stop() override;
 
 private:
-    ISVCEncoder*         pSvcEncoder_;
-    SEncParamBase        sEncParam_;
-    SFrameBSInfo         info_;
-    SSourcePicture       pic_;
+    ISVCEncoder*   pSvcEncoder_;
+    SEncParamBase  sEncParam_;
+    SFrameBSInfo   info_;
+    SSourcePicture pic_;
 
     std::chrono::system_clock::time_point onNewFramestart_;
     std::atomic<int>                      onNewFramecounter;
