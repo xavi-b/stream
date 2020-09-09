@@ -197,14 +197,8 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
         int h = sDstBufInfo.UsrData.sSystemBuffer.iHeight;
         int w = sDstBufInfo.UsrData.sSystemBuffer.iWidth;
 
-        spdlog::debug("format: {}", sDstBufInfo.UsrData.sSystemBuffer.iFormat);
-
-        std::fstream fs("received.yuv", std::fstream::out);
-        fs.write((const char*)pData_[0], h * w);
-        fs.write((const char*)pData_[1], h * w / 4);
-        fs.write((const char*)pData_[2], h * w / 4);
-        fs.close();
-        // exit(0);
+        spdlog::debug("format: {}, h: {}, w: {}", sDstBufInfo.UsrData.sSystemBuffer.iFormat, h, w);
+        spdlog::debug("stride[0]: {}, stride[1]: {}", sDstBufInfo.UsrData.sSystemBuffer.iStride[0], sDstBufInfo.UsrData.sSystemBuffer.iStride[1]);
 
         texture_.resize(h * w * 3);
 
@@ -240,12 +234,21 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
                 texture_.data()[frameImageCounter++] = (unsigned char)B2;
             }
 
+            pY += sDstBufInfo.UsrData.sSystemBuffer.iStride[0] - w;
+            pU += sDstBufInfo.UsrData.sSystemBuffer.iStride[1] - w/2;
+            pV += sDstBufInfo.UsrData.sSystemBuffer.iStride[1] - w/2;
+
             if (y % 2)
             {
-                pU -= w;
-                pV -= w;
+                pU -= sDstBufInfo.UsrData.sSystemBuffer.iStride[1];
+                pV -= sDstBufInfo.UsrData.sSystemBuffer.iStride[1];
             }
         }
+
+        std::fstream fs("received.rgb", std::fstream::out);
+        fs.write((const char*)texture_.data(), texture_.size());
+        fs.close();
+        // exit(0);
     }
 }
 

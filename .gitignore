@@ -52,3 +52,4 @@ imgui.ini
 .vscode
 
 *.yuv
+*.rgb
