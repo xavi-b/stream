@@ -142,8 +142,8 @@ SclBroadcaster::SclBroadcaster() : Broadcaster()
                 spdlog::debug("Image dimensions {}", size);
                 std::array<std::vector<unsigned char>, 3> yuv;
                 yuv[0].resize(size);
-                yuv[1].resize(size / 2);
-                yuv[2].resize(size / 2);
+                yuv[1].resize(size / 4);
+                yuv[2].resize(size / 4);
                 ExtractAndConvertToYUV(img, yuv);
 
                 std::fstream fs("test.yuv", std::fstream::out);

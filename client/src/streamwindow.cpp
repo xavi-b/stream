@@ -153,8 +153,8 @@ void StreamWindow::renderBackground()
 
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, bgTextureId_);
-    // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, texture_.data()); // TODO
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, texture_.data()); // TODO
 
     glBegin(GL_QUADS);
     {
@@ -194,8 +194,6 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
     spdlog::debug("iBufferStatus: {}", sDstBufInfo.iBufferStatus);
     if (sDstBufInfo.iBufferStatus == 1)
     {
-        texture_.resize(size);
-
         int h = sDstBufInfo.UsrData.sSystemBuffer.iHeight;
         int w = sDstBufInfo.UsrData.sSystemBuffer.iWidth;
 
@@ -203,30 +201,51 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
 
         std::fstream fs("received.yuv", std::fstream::out);
         fs.write((const char*)pData_[0], h * w);
-        fs.write((const char*)pData_[1], h * w / 2);
-        fs.write((const char*)pData_[2], h * w / 2);
+        fs.write((const char*)pData_[1], h * w / 4);
+        fs.write((const char*)pData_[2], h * w / 4);
         fs.close();
         // exit(0);
 
-        // int frameImageCounter = 0;
+        texture_.resize(h * w * 3);
 
-        // for (int y = 0; y < h; ++y) // traverse through the frame's height
-        // {
-        //     for (int x = 0; x < w; ++x) // traverse through the frame's width
-        //     {
-        //         float Y = (float)(pData_[0][y * w + x]) / 255;
-        //         float U = -0.436 + (float)(pData_[1][y * w + x]) / 255 * (0.436 * 2);
-        //         float V = -0.615 + (float)(pData_[2][y * w + x]) / 255 * (0.615 * 2);
+        int frameImageCounter = 0;
 
-        //         float RFormula = Y + 1.13983f * V;
-        //         float GFormula = Y - 0.39465f * U - 0.58060f * V;
-        //         float BFormula = Y + 2.03211f * U;
+        unsigned char* pY   = pData_[0];
+        unsigned char* pU   = pData_[1];
+        unsigned char* pV   = pData_[2];
 
-        //         texture_.data()[frameImageCounter++] = (unsigned char)RFormula;
-        //         texture_.data()[frameImageCounter++] = (unsigned char)GFormula;
-        //         texture_.data()[frameImageCounter++] = (unsigned char)BFormula;
-        //     }
-        // }
+        for (int y = 0; y < h; ++y)
+        {
+            for (int x = 0; x < w; x += 2)
+            {
+                int Y1 = *(pY++) - 16;
+                int Y2 = *(pY++) - 16;
+                int U  = *(pU++) - 128;
+                int V  = *(pV++) - 128;
+
+                int R1 = (298 * Y1 + 409 * V + 128) >> 8;
+                int G1 = (298 * Y1 - 100 * U - 208 * V + 128) >> 8;
+                int B1 = (298 * Y1 + 516 * U + 128) >> 8;
+
+                int R2 = (298 * Y2 + 409 * V + 128) >> 8;
+                int G2 = (298 * Y2 - 100 * U - 208 * V + 128) >> 8;
+                int B2 = (298 * Y2 + 516 * U + 128) >> 8;
+
+                texture_.data()[frameImageCounter++] = (unsigned char)R1;
+                texture_.data()[frameImageCounter++] = (unsigned char)G1;
+                texture_.data()[frameImageCounter++] = (unsigned char)B1;
+
+                texture_.data()[frameImageCounter++] = (unsigned char)R2;
+                texture_.data()[frameImageCounter++] = (unsigned char)G2;
+                texture_.data()[frameImageCounter++] = (unsigned char)B2;
+            }
+
+            if (y % 2)
+            {
+                pU -= w;
+                pV -= w;
+            }
+        }
     }
 }
 
