@@ -1,6 +1,7 @@
 #include "streamwindow.h"
 
 #include "broadcaster.h"
+#include "openh264_spdlog.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -20,39 +21,16 @@
 #include <cmrc/cmrc.hpp>
 CMRC_DECLARE(ST::RC);
 
+#include <fstream>
+
 namespace ST::UI
 {
-
-static spdlog::level::level_enum openh264_to_spdlog(int level)
-{
-    switch (level)
-    {
-    case WELS_LOG_QUIET:
-        return spdlog::level::level_enum::trace;
-    case WELS_LOG_ERROR:
-        return spdlog::level::level_enum::err;
-    case WELS_LOG_WARNING:
-        return spdlog::level::level_enum::warn;
-    case WELS_LOG_INFO:
-        return spdlog::level::level_enum::info;
-    case WELS_LOG_DEBUG:
-        return spdlog::level::level_enum::debug;
-    case WELS_LOG_DETAIL:
-        return spdlog::level::level_enum::info;
-    default:
-        return spdlog::level::level_enum::debug;
-    }
-}
-
-static void openh264_spdlog(void* context, int level, const char* message)
-{
-    spdlog::log(openh264_to_spdlog(level), message);
-}
 
 StreamWindow::StreamWindow() : Window()
 {
     WelsCreateDecoder(&pSvcDecoder_);
-    sDecParam_.eEcActiveIdc                = ERROR_CON_IDC::ERROR_CON_SLICE_COPY;
+    memset(&sDecParam_, 0, sizeof(SDecodingParam));
+    // sDecParam_.eEcActiveIdc                = ERROR_CON_IDC::ERROR_CON_SLICE_COPY;
     sDecParam_.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_TYPE::VIDEO_BITSTREAM_DEFAULT;
 
     int ret = pSvcDecoder_->Initialize(&sDecParam_);
@@ -61,13 +39,14 @@ StreamWindow::StreamWindow() : Window()
         spdlog::critical("Decoder initialization failed with error: {}", ret);
     }
 
-    int32_t iErrorConMethod = (int32_t)ERROR_CON_SLICE_MV_COPY_CROSS_IDR_FREEZE_RES_CHANGE;
-    pSvcDecoder_->SetOption(DECODER_OPTION_ERROR_CON_IDC, &iErrorConMethod);
+    // int32_t iErrorConMethod = (int32_t)ERROR_CON_SLICE_MV_COPY_CROSS_IDR_FREEZE_RES_CHANGE;
+    // pSvcDecoder_->SetOption(DECODER_OPTION_ERROR_CON_IDC, &iErrorConMethod);
 
-    int               log_level = WELS_LOG_DETAIL;
-    WelsTraceCallback callback_function;
-    callback_function = openh264_spdlog;
+    int log_level = WELS_LOG_DETAIL;
     pSvcDecoder_->SetOption(DECODER_OPTION_TRACE_LEVEL, &log_level);
+
+    WelsTraceCallback callback_function;
+    callback_function = ST::openh264_spdlog;
     pSvcDecoder_->SetOption(DECODER_OPTION_TRACE_CALLBACK, (void*)&callback_function);
 
     connectionWidget_.setOnConnectClicked([this]() {
@@ -175,7 +154,7 @@ void StreamWindow::renderBackground()
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, bgTextureId_);
     // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_UNSIGNED_BYTE, texture_.data()); // TODO
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, texture_.data()); // TODO
 
     glBegin(GL_QUADS);
     {
@@ -207,10 +186,10 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
 
     SBufferInfo sDstBufInfo;
     memset(&sDstBufInfo, 0, sizeof(SBufferInfo));
-    DECODING_STATE iRet = pSvcDecoder_->DecodeFrameNoDelay(data, size, pData_, &sDstBufInfo);
-    if (iRet != 0)
+    DECODING_STATE ret = pSvcDecoder_->DecodeFrameNoDelay(data, size, pData_, &sDstBufInfo);
+    if (ret != 0)
     {
-        spdlog::warn("DecodeFrameNoDelay failed: 0x{0:x}", iRet);
+        spdlog::warn("DecodeFrameNoDelay failed: 0x{0:x}", ret);
     }
     spdlog::debug("iBufferStatus: {}", sDstBufInfo.iBufferStatus);
     if (sDstBufInfo.iBufferStatus == 1)
@@ -220,25 +199,34 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
         int h = sDstBufInfo.UsrData.sSystemBuffer.iHeight;
         int w = sDstBufInfo.UsrData.sSystemBuffer.iWidth;
 
-        int frameImageCounter = 0;
+        spdlog::debug("format: {}", sDstBufInfo.UsrData.sSystemBuffer.iFormat);
 
-        for (int y = 0; y < h; ++y) // traverse through the frame's height
-        {
-            for (int x = 0; x < w; ++x) // traverse through the frame's width
-            {
-                float Y = (float)(pData_[0][y * w + x]) / 255;
-                float U = -0.436 + (float)(pData_[1][y * w + x]) / 255 * (0.436 * 2);
-                float V = -0.615 + (float)(pData_[2][y * w + x]) / 255 * (0.615 * 2);
+        std::fstream fs("received.yuv", std::fstream::out);
+        fs.write((const char*)pData_[0], h * w);
+        fs.write((const char*)pData_[1], h * w / 2);
+        fs.write((const char*)pData_[2], h * w / 2);
+        fs.close();
+        // exit(0);
 
-                float RFormula = Y + 1.13983f * V;
-                float GFormula = Y - 0.39465f * U - 0.58060f * V;
-                float BFormula = Y + 2.03211f * U;
+        // int frameImageCounter = 0;
 
-                texture_.data()[frameImageCounter++] = (unsigned char)RFormula;
-                texture_.data()[frameImageCounter++] = (unsigned char)GFormula;
-                texture_.data()[frameImageCounter++] = (unsigned char)BFormula;
-            }
-        }
+        // for (int y = 0; y < h; ++y) // traverse through the frame's height
+        // {
+        //     for (int x = 0; x < w; ++x) // traverse through the frame's width
+        //     {
+        //         float Y = (float)(pData_[0][y * w + x]) / 255;
+        //         float U = -0.436 + (float)(pData_[1][y * w + x]) / 255 * (0.436 * 2);
+        //         float V = -0.615 + (float)(pData_[2][y * w + x]) / 255 * (0.615 * 2);
+
+        //         float RFormula = Y + 1.13983f * V;
+        //         float GFormula = Y - 0.39465f * U - 0.58060f * V;
+        //         float BFormula = Y + 2.03211f * U;
+
+        //         texture_.data()[frameImageCounter++] = (unsigned char)RFormula;
+        //         texture_.data()[frameImageCounter++] = (unsigned char)GFormula;
+        //         texture_.data()[frameImageCounter++] = (unsigned char)BFormula;
+        //     }
+        // }
     }
 }
 

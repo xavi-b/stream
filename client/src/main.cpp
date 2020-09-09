@@ -1,6 +1,7 @@
 #include "streamwindow.h"
 #include "connectionwidget.h"
 #include "streamselectionwidget.h"
+#include "sclbroadcaster.h"
 
 #include <exception>
 #include <spdlog/spdlog.h>
@@ -16,6 +17,7 @@ int main(int, char**)
 
     try
     {
+        ST::SclBroadcaster broadcaster;
         ST::UI::StreamWindow mainwindow;
         return mainwindow.exec();
     }

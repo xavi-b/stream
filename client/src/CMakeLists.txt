@@ -10,4 +10,5 @@ target_sources(${MODULE_NAME}
         "${CMAKE_CURRENT_SOURCE_DIR}/streamwindow.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/imguispinner.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/broadcaster.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/sclbroadcaster.cpp"
 )

@@ -11,6 +11,7 @@ pkg_search_module(GLFW REQUIRED glfw3)
 find_package(Boost COMPONENTS system REQUIRED)
 find_package(spdlog REQUIRED)
 find_library(VLC_LIBRARY vlc)
+find_package(X11 REQUIRED)
 
 target_compile_definitions(${MODULE_NAME}
     PUBLIC
@@ -23,6 +24,7 @@ target_include_directories(${MODULE_NAME}
         ${PROJECT_SOURCE_DIR}/third-party/glad/include
         ${PROJECT_SOURCE_DIR}/third-party/imgui
         ${PROJECT_SOURCE_DIR}/third-party/stb
+        ${PROJECT_SOURCE_DIR}/third-party/screen_capture_lite/include
 )
 
 target_link_libraries(${MODULE_NAME}
@@ -32,9 +34,15 @@ target_link_libraries(${MODULE_NAME}
         ${GLFW_LIBRARIES}
         spdlog::spdlog
         ${VLC_LIBRARY}
+        ${X11_LIBRARIES}
+        ${X11_Xfixes_LIB}
+        ${X11_Xinerama_LIB}
         glad
         imgui
+        screen_capture_lite
 )
+
+message("test: ${screen_capture_lite_PLATFORM_LIBS}")
 
 include(${PROJECT_SOURCE_DIR}/third-party/cmrc/CMakeRC.cmake)
 

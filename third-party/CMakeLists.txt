@@ -86,3 +86,7 @@ add_custom_command(
 add_custom_target(${OPENH264_LIB_NAME} ALL
     DEPENDS ${OPENH264_LIB_FILE}
 )
+
+# screen_capture_lite
+set(BUILD_SHARED_LIBS ON)
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/screen_capture_lite")

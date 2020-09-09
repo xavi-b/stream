@@ -15,3 +15,6 @@
 [submodule "third-party/openh264"]
 	path = third-party/openh264
 	url = git@github.com:cisco/openh264.git
+[submodule "third-party/screen_capture_lite"]
+	path = third-party/screen_capture_lite
+	url = git@github.com:smasherprog/screen_capture_lite.git

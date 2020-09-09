@@ -40,7 +40,7 @@ void Client::selectStream(std::string const& stream)
 
 void Client::sendStream(unsigned char* data, size_t size)
 {
-    spdlog::debug("sendStream");
+    spdlog::debug("sendStream, size {}", size);
     socket_.async_send_to(boost::asio::buffer(data, size),
                           serverEndpoint_,
                           boost::bind(&Client::handleSend,

@@ -50,3 +50,5 @@ imgui.ini
 
 # vscode
 .vscode
+
+*.yuv

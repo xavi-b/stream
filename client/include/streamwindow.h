@@ -50,7 +50,7 @@ private:
 
     ISVCDecoder*   pSvcDecoder_;
     unsigned char* pData_[3];
-    SDecodingParam sDecParam_ = {0};
+    SDecodingParam sDecParam_;
 };
 
 } // namespace ST::UI
