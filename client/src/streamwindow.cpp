@@ -17,6 +17,7 @@
 
 #include <chrono>
 #include <exception>
+#include <algorithm>
 
 #include <cmrc/cmrc.hpp>
 CMRC_DECLARE(ST::RC);
@@ -212,18 +213,18 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
         {
             for (int x = 0; x < w; x += 2)
             {
-                int Y1 = *(pY++) - 16;
-                int Y2 = *(pY++) - 16;
-                int U  = *(pU++) - 128;
-                int V  = *(pV++) - 128;
+                int Y1 = ((int)*(pY++)) - 16;
+                int Y2 = ((int)*(pY++)) - 16;
+                int U  = ((int)*(pU++)) - 128;
+                int V  = ((int)*(pV++)) - 128;
 
-                int R1 = (298 * Y1 + 409 * V + 128) >> 8;
-                int G1 = (298 * Y1 - 100 * U - 208 * V + 128) >> 8;
-                int B1 = (298 * Y1 + 516 * U + 128) >> 8;
+                int R1 = std::clamp((298 * Y1 + 409 * V + 128) >> 8, 0, UINT8_MAX);
+                int G1 = std::clamp((298 * Y1 - 100 * U - 208 * V + 128) >> 8, 0, UINT8_MAX);
+                int B1 = std::clamp((298 * Y1 + 516 * U + 128) >> 8, 0, UINT8_MAX);
 
-                int R2 = (298 * Y2 + 409 * V + 128) >> 8;
-                int G2 = (298 * Y2 - 100 * U - 208 * V + 128) >> 8;
-                int B2 = (298 * Y2 + 516 * U + 128) >> 8;
+                int R2 = std::clamp((298 * Y2 + 409 * V + 128) >> 8, 0, UINT8_MAX);
+                int G2 = std::clamp((298 * Y2 - 100 * U - 208 * V + 128) >> 8, 0, UINT8_MAX);
+                int B2 = std::clamp((298 * Y2 + 516 * U + 128) >> 8, 0, UINT8_MAX);
 
                 texture_.data()[frameImageCounter++] = (unsigned char)R1;
                 texture_.data()[frameImageCounter++] = (unsigned char)G1;
