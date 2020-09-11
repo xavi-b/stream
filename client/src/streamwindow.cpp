@@ -157,18 +157,30 @@ void StreamWindow::renderBackground()
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, bgTextureId_);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, texture_.data()); // TODO
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture_.w, texture_.h, 0, GL_RGB, GL_UNSIGNED_BYTE, texture_.pixels.data());
+
+    float w = 1.0f;
+    float h = 1.0f;
+
+    if (texture_.h > 0 && texture_.w > 0)
+    {
+        int rw = display_h * texture_.w / texture_.h;
+        if (rw <= display_w)
+            w = ((float)rw) / display_w;
+        else
+            h = ((float)display_w * texture_.h / texture_.w) / display_h;
+    }
 
     glBegin(GL_QUADS);
     {
         glTexCoord2f(0.0f, 0.0f);
-        glVertex3f(-1.0f, 1.0f, 0.0f);
+        glVertex3f(-w, h, 0.0f);
         glTexCoord2f(1.0f, 0.0f);
-        glVertex3f(1.0f, 1.0f, 0.0f);
+        glVertex3f(w, h, 0.0f);
         glTexCoord2f(1.0f, 1.0f);
-        glVertex3f(1.0f, -1.0f, 0.0f);
+        glVertex3f(w, -h, 0.0f);
         glTexCoord2f(0.0f, 1.0f);
-        glVertex3f(-1.0f, -1.0f, 0.0f);
+        glVertex3f(-w, -h, 0.0f);
     }
     glEnd();
 
@@ -200,12 +212,15 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
         int h = sDstBufInfo.UsrData.sSystemBuffer.iHeight;
         int w = sDstBufInfo.UsrData.sSystemBuffer.iWidth;
 
+        texture_.h = h;
+        texture_.w = w;
+
         spdlog::debug("format: {}, h: {}, w: {}", sDstBufInfo.UsrData.sSystemBuffer.iFormat, h, w);
         spdlog::debug("stride[0]: {}, stride[1]: {}",
                       sDstBufInfo.UsrData.sSystemBuffer.iStride[0],
                       sDstBufInfo.UsrData.sSystemBuffer.iStride[1]);
 
-        texture_.resize(h * w * 3);
+        texture_.pixels.resize(h * w * 3);
 
         int frameImageCounter = 0;
 
@@ -230,13 +245,13 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
                 int G2 = std::clamp((298 * Y2 - 100 * U - 208 * V + 128) >> 8, 0, UINT8_MAX);
                 int B2 = std::clamp((298 * Y2 + 516 * U + 128) >> 8, 0, UINT8_MAX);
 
-                texture_.data()[frameImageCounter++] = (unsigned char)R1;
-                texture_.data()[frameImageCounter++] = (unsigned char)G1;
-                texture_.data()[frameImageCounter++] = (unsigned char)B1;
+                texture_.pixels.data()[frameImageCounter++] = (unsigned char)R1;
+                texture_.pixels.data()[frameImageCounter++] = (unsigned char)G1;
+                texture_.pixels.data()[frameImageCounter++] = (unsigned char)B1;
 
-                texture_.data()[frameImageCounter++] = (unsigned char)R2;
-                texture_.data()[frameImageCounter++] = (unsigned char)G2;
-                texture_.data()[frameImageCounter++] = (unsigned char)B2;
+                texture_.pixels.data()[frameImageCounter++] = (unsigned char)R2;
+                texture_.pixels.data()[frameImageCounter++] = (unsigned char)G2;
+                texture_.pixels.data()[frameImageCounter++] = (unsigned char)B2;
             }
 
             pY += sDstBufInfo.UsrData.sSystemBuffer.iStride[0] - w;
@@ -273,7 +288,7 @@ void StreamWindow::decodeStreamData(unsigned char* data, int size)
         fsyuv.close();
 
         std::fstream fs("received.rgb", std::fstream::out);
-        fs.write((const char*)texture_.data(), texture_.size());
+        fs.write((const char*)texture_.pixels.data(), texture_.pixels.size());
         fs.close();
 #endif
     }

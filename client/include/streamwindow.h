@@ -26,6 +26,13 @@ class StreamWindow : public Window
         Connected    = 2
     };
 
+    struct Texture
+    {
+        int                        w = 0;
+        int                        h = 0;
+        std::vector<unsigned char> pixels;
+    };
+
 public:
     StreamWindow();
     virtual ~StreamWindow();
@@ -45,8 +52,8 @@ private:
     ST::UI::ConnectingWidget      connectingWidget_;
     ST::UI::StreamSelectionWidget streamSelectionWidget_;
 
-    std::vector<unsigned char> texture_;
-    GLuint                     bgTextureId_;
+    Texture texture_;
+    GLuint  bgTextureId_;
 
     ISVCDecoder*   pSvcDecoder_;
     unsigned char* pData_[3];
