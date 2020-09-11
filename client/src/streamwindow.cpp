@@ -195,6 +195,7 @@ void StreamWindow::onClose()
 
 void StreamWindow::decodeStreamData(unsigned char* data, int size)
 {
+    // FIXME if broadcast started before connection then decode error
     // TODO producer thread
 
     spdlog::debug("decodeStreamData, size: {}", size);
