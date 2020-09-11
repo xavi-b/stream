@@ -8,7 +8,7 @@ namespace ST::Network
 using boost::asio::ip::udp;
 
 Server::Server(boost::asio::io_service& ioService, unsigned short portNum)
-    : socket_(ioService, udp::endpoint(udp::v4(), portNum)), aliveTimer_(ioService)
+    : ioService_(ioService), socket_(ioService, udp::endpoint(udp::v4(), portNum)), aliveTimer_(ioService)
 {
     receive();
     keepAlive();
@@ -16,19 +16,17 @@ Server::Server(boost::asio::io_service& ioService, unsigned short portNum)
 
 void Server::receive()
 {
-    auto connection = std::make_shared<Connection>();
+    auto endpoint = std::make_shared<boost::asio::ip::udp::endpoint>();
 
     boost::asio::streambuf::mutable_buffers_type mutableBuffer = receivingBuffer_.prepare(65536);
 
     socket_.async_receive_from(boost::asio::buffer(mutableBuffer),
-                               connection->endpoint(),
+                               *endpoint,
                                boost::bind(&Server::handleReceive,
                                            this,
-                                           connection,
+                                           endpoint,
                                            boost::asio::placeholders::error,
                                            boost::asio::placeholders::bytes_transferred));
-
-    // TODO timer sendStream
 }
 
 void Server::keepAlive()
@@ -46,10 +44,10 @@ void Server::handleKeepAlive()
         boost::shared_ptr<std::string> message(new std::string("alive"));
 
         socket_.async_send_to(boost::asio::buffer(*message),
-                              c->endpoint(),
+                              c.first,
                               boost::bind(&Server::handleSend,
                                           this,
-                                          c,
+                                          std::make_shared<boost::asio::ip::udp::endpoint>(c.first),
                                           boost::asio::placeholders::error,
                                           boost::asio::placeholders::bytes_transferred));
     }
@@ -57,7 +55,7 @@ void Server::handleKeepAlive()
     keepAlive();
 }
 
-void Server::handleReceive(shared_connection                connection,
+void Server::handleReceive(shared_endpoint                  endpoint,
                            boost::system::error_code const& error,
                            std::size_t                      bytesTransferred)
 {
@@ -65,45 +63,54 @@ void Server::handleReceive(shared_connection                connection,
 
     if (!error || error == boost::asio::error::message_size)
     {
+        shared_connection connection = addConnection(endpoint);
+
         std::string stringData = std::string((const char*)receivingBuffer_.data().data(), bytesTransferred);
 
         if (stringData.rfind("getStreams", 0) == 0)
         {
-            spdlog::debug("Received from {}: {}", connection->endpoint().address().to_string(), stringData);
+            spdlog::debug("Received from {}: {}", endpoint->address().to_string(), stringData);
 
             std::string uuid = stringData.substr(strlen("getStreams"));
             spdlog::debug("getStreams uuid: {}", uuid);
             connection->uuid() = boost::lexical_cast<boost::uuids::uuid>(uuid);
 
-            addConnection(connection);
-
             boost::shared_ptr<std::string> message = boost::make_shared<std::string>("getStreams");
 
             for (auto const& c : connections_)
             {
-                if (c->uuid() == connection->uuid())
+                spdlog::debug("stream: {}", (std::string)(*c.second));
+
+                if (c.first == *endpoint)
                     continue;
 
-                (*message) += boost::lexical_cast<std::string>(c->uuid()) + '|';
+                if (!c.second->streaming())
+                    continue;
+
+                (*message) += boost::lexical_cast<std::string>(c.second->uuid()) + '|';
             }
 
             socket_.async_send_to(boost::asio::buffer(*message),
-                                  connection->endpoint(),
+                                  *endpoint,
                                   boost::bind(&Server::handleSend,
                                               this,
-                                              connection,
+                                              endpoint,
                                               boost::asio::placeholders::error,
                                               boost::asio::placeholders::bytes_transferred));
         }
         else if (stringData.rfind("selectStream", 0) == 0)
         {
-            spdlog::debug("Received from {}: {}", connection->endpoint().address().to_string(), stringData);
-            // TODO selectStream
+            spdlog::debug("Received from {}: {}", endpoint->address().to_string(), stringData);
+            std::string stream = stringData.substr(strlen("selectStream"));
+
+            connection->setSelectedStream(stream);
         }
         else // stream
         {
-            spdlog::debug(
-                "Received stream from {}, size {}", connection->endpoint().address().to_string(), bytesTransferred);
+            spdlog::debug("Received stream from {}, size {}", endpoint->address().to_string(), bytesTransferred);
+
+            connection->setStreaming(true);
+
             if (error == boost::asio::error::message_size)
             {
                 spdlog::warn("boost::asio::error::message_size");
@@ -112,17 +119,19 @@ void Server::handleReceive(shared_connection                connection,
 
             for (auto const& c : connections_)
             {
-                if (c->uuid() == connection->uuid())
+                spdlog::debug("stream: {}", (std::string)(*c.second));
+
+                if (c.first == *endpoint)
                     continue;
 
-                // TODO if selected broadcast
+                if (boost::lexical_cast<std::string>(connection->uuid()) == c.second->selectedStream())
                 {
                     // TODO buffer size
                     socket_.async_send_to(boost::asio::buffer(receivingBuffer_.data().data(), bytesTransferred),
-                                          c->endpoint(),
+                                          c.first,
                                           boost::bind(&Server::handleSend,
                                                       this,
-                                                      c,
+                                                      std::make_shared<boost::asio::ip::udp::endpoint>(c.first),
                                                       boost::asio::placeholders::error,
                                                       boost::asio::placeholders::bytes_transferred));
                 }
@@ -134,39 +143,27 @@ void Server::handleReceive(shared_connection                connection,
     }
     else
     {
-        removeConnection(connection);
+        removeConnection(endpoint);
     }
 }
 
-void Server::handleSend(shared_connection                connection,
-                        const boost::system::error_code& error,
-                        std::size_t bytesTransferred)
+void Server::handleSend(shared_endpoint endpoint, const boost::system::error_code& error, std::size_t bytesTransferred)
 {
     spdlog::debug("handleSend {}", bytesTransferred);
 
     if (error)
-        removeConnection(connection);
+        removeConnection(endpoint);
 }
 
-void Server::addConnection(shared_connection connection)
+Server::shared_connection Server::addConnection(shared_endpoint endpoint)
 {
-    auto it = std::find_if(connections_.begin(), connections_.end(), [&connection](auto const& c) {
-        return c->uuid() == connection->uuid();
-    });
-    if (it == connections_.end())
-    {
-        spdlog::debug("addConnection {}", boost::lexical_cast<std::string>(connection->uuid()));
-        connections_.insert(connection);
-    }
+    auto ret = connections_.insert({*endpoint, std::make_shared<Connection>(ioService_)});
+    return ret.first->second;
 }
 
-void Server::removeConnection(shared_connection connection)
+void Server::removeConnection(shared_endpoint endpoint)
 {
-    auto it = std::find_if(connections_.begin(), connections_.end(), [&connection](auto const& c) {
-        return c->uuid() == connection->uuid();
-    });
-    if (it != connections_.end())
-        connections_.erase(it);
+    connections_.erase(*endpoint);
 }
 
 } // namespace ST::Network

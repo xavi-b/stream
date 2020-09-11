@@ -17,10 +17,11 @@ namespace ST::Network
 
 class Server
 {
+public:
     using receiving_buffer  = boost::asio::streambuf;
     using shared_connection = std::shared_ptr<Connection>;
+    using shared_endpoint   = std::shared_ptr<boost::asio::ip::udp::endpoint>;
 
-public:
     Server(boost::asio::io_service& ioService, unsigned short portNum);
 
 private:
@@ -29,19 +30,18 @@ private:
 
     void handleKeepAlive();
 
-    void handleReceive(shared_connection                connection,
-                       boost::system::error_code const& error,
-                       std::size_t                      bytesTransferred);
+    void handleReceive(shared_endpoint endpoint, boost::system::error_code const& error, std::size_t bytesTransferred);
 
-    void handleSend(shared_connection connection, boost::system::error_code const& error, std::size_t bytesTransferred);
+    void handleSend(shared_endpoint endpoint, boost::system::error_code const& error, std::size_t bytesTransferred);
 
-    void addConnection(shared_connection connection);
-    void removeConnection(shared_connection connection);
+    shared_connection addConnection(shared_endpoint endpoint);
+    void              removeConnection(shared_endpoint endpoint);
 
-    boost::asio::ip::udp::socket          socket_;
-    boost::asio::deadline_timer           aliveTimer_;
-    std::unordered_set<shared_connection> connections_;
-    receiving_buffer                      receivingBuffer_;
+    boost::asio::io_service&                                    ioService_;
+    boost::asio::ip::udp::socket                                socket_;
+    boost::asio::deadline_timer                                 aliveTimer_;
+    std::map<boost::asio::ip::udp::endpoint, shared_connection> connections_;
+    receiving_buffer                                            receivingBuffer_;
 };
 
 } // namespace ST::Network
