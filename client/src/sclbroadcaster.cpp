@@ -106,6 +106,10 @@ SclBroadcaster::SclBroadcaster() : Broadcaster()
     int videoFormat = videoFormatI420;
     pSvcEncoder_->SetOption(ENCODER_OPTION_DATAFORMAT, &videoFormat);
 
+    int idrInterval = 128;
+    pSvcEncoder_->SetOption(ENCODER_OPTION_IDR_INTERVAL, &idrInterval);
+    pSvcEncoder_->ForceIntraFrame(true);
+
     memset(&info_, 0, sizeof(SFrameBSInfo));
     memset(&pic_, 0, sizeof(SSourcePicture));
 
