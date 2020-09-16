@@ -130,7 +130,8 @@ void Client::handleReceive(const boost::system::error_code& error, size_t bytesT
                 // TODO
             }
 
-            StreamData data((const unsigned char*)networkBuffer_.data().data(), ((const unsigned char*)networkBuffer_.data().data()) + bytesTransferred);
+            StreamData data((const unsigned char*)networkBuffer_.data().data(),
+                            ((const unsigned char*)networkBuffer_.data().data()) + bytesTransferred);
             if (onStreamReceived_)
                 onStreamReceived_(data);
         }
@@ -148,11 +149,7 @@ void Client::handleSend(const boost::system::error_code& error, size_t bytesTran
 {
     spdlog::debug("handleSend {}", bytesTransferred);
 
-    if (!error)
-    {
-        // TODO ?
-    }
-    else
+    if (error)
     {
         spdlog::warn(error.message());
     }

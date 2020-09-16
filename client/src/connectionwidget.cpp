@@ -17,7 +17,6 @@ void ConnectionWidget::render()
 
     ImGui::Begin("Connection", NULL, window_flags);
 
-    // TODO
     struct TextFilters
     {
         static int FilterIp(ImGuiInputTextCallbackData* data)
