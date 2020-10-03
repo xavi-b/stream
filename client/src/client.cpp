@@ -40,13 +40,23 @@ void Client::selectStream(std::string const& stream)
 
 void Client::sendStream(unsigned char* data, size_t size)
 {
+    static const size_t MAX_UDP = 65507;
+
     spdlog::debug("sendStream, size {}", size);
-    socket_.async_send_to(boost::asio::buffer(data, size),
-                          serverEndpoint_,
-                          boost::bind(&Client::handleSend,
-                                      shared_from_this(),
-                                      boost::asio::placeholders::error,
-                                      boost::asio::placeholders::bytes_transferred));
+    size_t packetSize = 0;
+    for (size_t sentSize = 0; sentSize < size; sentSize += packetSize)
+    {
+        size_t remainingSize = size - sentSize;
+
+        packetSize = remainingSize > MAX_UDP ? MAX_UDP : remainingSize;
+
+        socket_.async_send_to(boost::asio::buffer((unsigned char*)data + sentSize, packetSize),
+                              serverEndpoint_,
+                              boost::bind(&Client::handleSend,
+                                          shared_from_this(),
+                                          boost::asio::placeholders::error,
+                                          boost::asio::placeholders::bytes_transferred));
+    }
 }
 
 void Client::getStreams()
@@ -125,10 +135,7 @@ void Client::handleReceive(const boost::system::error_code& error, size_t bytesT
         {
             spdlog::debug("Received stream from {}, size: {}", serverEndpoint_.address().to_string(), bytesTransferred);
             if (error == boost::asio::error::message_size)
-            {
                 spdlog::warn("boost::asio::error::message_size");
-                // TODO
-            }
 
             StreamData data((const unsigned char*)networkBuffer_.data().data(),
                             ((const unsigned char*)networkBuffer_.data().data()) + bytesTransferred);

@@ -112,10 +112,7 @@ void Server::handleReceive(shared_endpoint                  endpoint,
             connection->setStreaming(true);
 
             if (error == boost::asio::error::message_size)
-            {
                 spdlog::warn("boost::asio::error::message_size");
-                // TODO
-            }
 
             for (auto const& c : connections_)
             {
@@ -126,7 +123,6 @@ void Server::handleReceive(shared_endpoint                  endpoint,
 
                 if (boost::lexical_cast<std::string>(connection->uuid()) == c.second->selectedStream())
                 {
-                    // TODO buffer size
                     socket_.async_send_to(boost::asio::buffer(receivingBuffer_.data().data(), bytesTransferred),
                                           c.first,
                                           boost::bind(&Server::handleSend,

@@ -78,9 +78,9 @@ static void ExtractAndConvertToYUV(const SL::Screen_Capture::Image& img, std::ar
 
 SclBroadcaster::SclBroadcaster() : Broadcaster()
 {
-    // TODO udp size
-    int width  = 512;
-    int height = 512;
+    // TODO args ?
+    int width  = 1920;
+    int height = 1080;
 
     WelsCreateSVCEncoder(&pSvcEncoder_);
     memset(&sEncParam_, 0, sizeof(SEncParamBase));
@@ -121,20 +121,23 @@ SclBroadcaster::SclBroadcaster() : Broadcaster()
     pic_.iStride[2]   = pic_.iStride[1];
 
     screenCaptureManager_ =
-        SL::Screen_Capture::CreateCaptureConfiguration([]() {
+        SL::Screen_Capture::CreateCaptureConfiguration([width, height]() {
             auto mons = SL::Screen_Capture::GetMonitors();
             spdlog::debug("Library is requesting the list of monitors to capture!");
             for (auto& m : mons)
             {
-                spdlog::debug("{}", m.Name);
-                SL::Screen_Capture::Height(m, 512);
-                SL::Screen_Capture::Width(m, 512);
+                spdlog::debug("{} {}x{}", m.Name, m.Width, m.Height);
+                if (width >= m.Width || height >= m.Height)
+                    continue;
+                SL::Screen_Capture::Height(m, width);
+                SL::Screen_Capture::Width(m, height);
             }
             return mons;
         })
-            ->onFrameChanged([&](const SL::Screen_Capture::Image& img, const SL::Screen_Capture::Monitor& monitor) {
+            ->onFrameChanged(
+                [&](const SL::Screen_Capture::Image& /*img*/, const SL::Screen_Capture::Monitor& /*monitor*/) {
 
-            })
+                })
             ->onNewFrame([&](const SL::Screen_Capture::Image& img, const SL::Screen_Capture::Monitor& monitor) {
                 if (!started_)
                     return;

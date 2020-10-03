@@ -133,8 +133,8 @@ void StreamWindow::render()
             connectionState_ = ConnectionState::Connected;
     }
 
-    bool show_demo_window = true;
-    ImGui::ShowDemoWindow(&show_demo_window);
+    // bool show_demo_window = true;
+    // ImGui::ShowDemoWindow(&show_demo_window);
 
     if (connectionState_ == ConnectionState::NotConnected)
         connectionWidget_.render();
@@ -195,7 +195,7 @@ void StreamWindow::onClose()
 
 void StreamWindow::decodeStreamData(unsigned char* data, int size)
 {
-    // TODO producer thread
+    // TODO producer thread ?
 
     spdlog::debug("decodeStreamData, size: {}", size);
 
