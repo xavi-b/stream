@@ -29,7 +29,7 @@ protected:
     NewFrameCallback onNewFrame_;
 
 private:
-    static Broadcaster* singleton_;
+    static inline Broadcaster* singleton_ = nullptr;
 };
 
 } // namespace ST

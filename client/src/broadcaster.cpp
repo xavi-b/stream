@@ -3,8 +3,6 @@
 namespace ST
 {
 
-Broadcaster* Broadcaster::singleton_ = nullptr;
-
 Broadcaster::Broadcaster()
 {
     if (singleton_)
